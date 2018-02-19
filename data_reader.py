@@ -3,7 +3,7 @@ import io
 import logging
 import numpy as np
 import data as data
-PATH_TO_GLOVE = 'glove/glove.840B.300d.txt'
+PATH_TO_GLOVE = 'glove/glove.6B.100d.txt'
 
 class SSTDataReader(object):
     def __init__(self, task_dir_path, nclasses=2, seed=1111):
@@ -26,7 +26,7 @@ class SSTDataReader(object):
 
         _, word2id = data.create_dictionary(samples, threshold=0)
         word_vec = data.get_wordvec(PATH_TO_GLOVE, word2id)
-        wvec_dim = 300
+        wvec_dim = 100
 
         #stores the value of theta for each word
         word_complex_phase = data.set_wordphase(word2id)
@@ -72,9 +72,11 @@ class SSTDataReader(object):
 
 if __name__ == '__main__':
     dir_name = 'C:/Users/quartz/Documents/python/complex_word_embedding/'
-    reader = SSTDataReader(dir_name,nclasses = 5)
+    reader = SSTDataReader(dir_name,nclasses = 2)
     params = reader.get_word_embedding()
     # print(params['word_vec'])
-    sentence_embedding = reader.create_batch(embedding_params = params,batch_size = 1)
-    batches = sentence_embedding['train']['X']
-    print(batches)
+    sentences = reader.create_batch(embedding_params = params,batch_size = 1)
+    batches = sentences['train']['X']
+    labels = sentences['train']['y']
+    print(len(batches))
+    print(len(labels))
