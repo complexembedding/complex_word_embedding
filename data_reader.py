@@ -75,6 +75,6 @@ if __name__ == '__main__':
     reader = SSTDataReader(dir_name,nclasses = 5)
     params = reader.get_word_embedding()
     # print(params['word_vec'])
-    sentence_embedding_sequence = reader.create_batch(embedding_params = params,batch_size = 1)
+    sentence_embedding = reader.create_batch(embedding_params = params,batch_size = 1)
     batches = sentence_embedding['train']['X']
     print(batches)
