@@ -8,17 +8,21 @@ from embedding import phase_embedding_layer, amplitude_embedding_layer
 from mat_multiply import complex_multiply
 from data import orthonormalized_word_embeddings,get_lookup_table
 from data_reader import SSTDataReader
+from average import complex_average
 
 
 def run_complex_embedding_network(lookup_table, max_sequence_length):
 
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
 
-    amplitude_embedding = amplitude_embedding_layer(lookup_table, max_sequence_length)(sequence_input)
 
     phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])(sequence_input)
 
-    output = complex_multiply()([phase_embedding, amplitude_embedding])
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length)(sequence_input)
+
+    sentence_embedding_seq = complex_multiply()([phase_embedding, amplitude_embedding])
+
+    output = complex_average()(sentence_embedding_seq)
 
     model = Model(sequence_input, output)
     model.compile(loss='categorical_crossentropy',

@@ -26,7 +26,7 @@ class SSTDataReader(object):
 
         id2word, word2id = data.create_dictionary(samples, threshold=0)
         word_vec = data.get_wordvec(path_to_vec, word2id)
-        wvec_dim = 100
+        wvec_dim = len(word_vec[next(iter(word_vec))])
 
         #stores the value of theta for each word
         word_complex_phase = data.set_wordphase(word2id)
