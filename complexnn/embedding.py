@@ -31,9 +31,10 @@ def phase_embedding_layer(max_sequence_length, input_dim):
     return embedding_layer
 
 
-def amplitude_embedding_layer(embedding_matrix, word_list, max_sequence_length):
+def amplitude_embedding_layer(embedding_matrix, max_sequence_length):
     embedding_dim = embedding_matrix.shape[0]
-    embedding_layer = Embedding(len(word_list),
+    vocabulary_size = embedding_matrix.shape[1]
+    embedding_layer = Embedding(vocabulary_size,
                             embedding_dim,
                             weights=[np.transpose(embedding_matrix)],
                             input_length=max_sequence_length,

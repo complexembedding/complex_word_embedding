@@ -7,7 +7,7 @@ import cmath
 import random
 import math
 
-word_list = []
+
 
 # Create dictionary
 def create_dictionary(sentences, threshold=0):
@@ -22,9 +22,9 @@ def create_dictionary(sentences, threshold=0):
             if words[word] >= threshold:
                 newwords[word] = words[word]
         words = newwords
-    words['<s>'] = 1e9 + 4
-    words['</s>'] = 1e9 + 3
-    words['<p>'] = 1e9 + 2
+    # words['<s>'] = 1e9 + 4
+    # words['</s>'] = 1e9 + 3
+    # words['<p>'] = 1e9 + 2
 
     sorted_words = sorted(words.items(), key=lambda x: -x[1])  # inverse sort
     id2word = []
@@ -103,7 +103,29 @@ def set_wordphase(word2id):
 
     return word2phase
 
-def get_batch(embedding_params, batch):
+def get_index_batch(embedding_params, batch):
+    batch = [sent if sent != [] else ['.'] for sent in batch]
+    embeddings = []
+
+    word_list = embedding_params['word2id']
+    for sent in batch:
+        sentvec = []
+        for word in sent:
+            if word in word_list:
+                sentvec.append(word_list[word])
+
+        if not sentvec:
+            vec = np.zeros(embedding_params['wvec_dim'])
+            sentvec.append(vec)
+        # word_count = len(sentvec)
+        # sentvec = np.mean(sentvec, 0)*math.sqrt(word_count)
+        embeddings.append(sentvec)
+
+    embeddings = np.vstack(embeddings)
+    return embeddings
+
+
+def get_vector_batch(embedding_params, batch):
     batch = [sent if sent != [] else ['.'] for sent in batch]
     embeddings = []
 
@@ -125,6 +147,22 @@ def get_batch(embedding_params, batch):
 
     embeddings = np.vstack(embeddings)
     return embeddings
+
+def get_lookup_table(embedding_params):
+    id2word = embedding_params['id2word']
+    word_vec = embedding_params['word_vec']
+    lookup_table = []
+    for i in range(0, len(id2word)):
+        word = id2word[i]
+        wvec = [0]* embedding_params['wvec_dim']
+        if word in word_vec:
+            wvec = word_vec[word]
+        # print(wvec)
+        lookup_table.append(wvec)
+
+    lookup_table = np.asarray(lookup_table)
+    return(lookup_table)
+
 
 
 def main():

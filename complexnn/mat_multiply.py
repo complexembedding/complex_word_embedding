@@ -69,17 +69,17 @@ class complex_multiply(Layer):
 
         real_part = K.repeat_elements(K.cos(phase), embedding_dim, axis = 2)*amplitude
         imag_part = K.repeat_elements(K.sin(phase), embedding_dim, axis = 2)*amplitude
-        print(real_part.shape)
-        print(imag_part.shape)
+        # print(real_part.shape)
+        # print(imag_part.shape)
 
         real_part = K.reshape(real_part,[-1,10,embedding_dim,1])
         imag_part =  K.reshape(imag_part,[-1,10,embedding_dim,1])
         y = K.concatenate([real_part,imag_part],axis = -1)
-        print(y.shape)
+        # print(y.shape)
         return y
 
     def compute_output_shape(self, input_shape):
-        print(type(input_shape[1]))
+        # print(type(input_shape[1]))
         output_shape = list(input_shape[1])
         output_shape.append(2)
         return(tuple(output_shape))
@@ -90,7 +90,7 @@ def main():
     max_sequence_length = 10
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
 
-    amplitude_embedding = amplitude_embedding_layer(embedding_matrix, word_list,max_sequence_length)(sequence_input)
+    amplitude_embedding = amplitude_embedding_layer(embedding_matrix,max_sequence_length)(sequence_input)
 
     phase_embedding = phase_embedding_layer(max_sequence_length, len(word_list))(sequence_input)
 
