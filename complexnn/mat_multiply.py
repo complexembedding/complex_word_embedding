@@ -72,8 +72,8 @@ class complex_multiply(Layer):
         print(real_part.shape)
         print(imag_part.shape)
 
-        real_part = K.reshape(real_part,[-1,10,100,1])
-        imag_part =  K.reshape(real_part,[-1,10,100,1])
+        real_part = K.reshape(real_part,[-1,10,embedding_dim,1])
+        imag_part =  K.reshape(real_part,[-1,10,embedding_dim,1])
         y = K.concatenate([real_part,imag_part],axis = -1)
         print(y.shape)
         return y
