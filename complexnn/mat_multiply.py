@@ -94,9 +94,8 @@ def main():
 
     phase_embedding = phase_embedding_layer(max_sequence_length, len(word_list))(sequence_input)
 
-    sentence_embedding_seq = complex_multiply()([phase_embedding, amplitude_embedding])
+    output = complex_multiply()([phase_embedding, amplitude_embedding])
 
-    output = complex_average()(sentence_embedding_seq)
     model = Model(sequence_input, output)
     model.compile(loss='categorical_crossentropy',
               optimizer='rmsprop',
@@ -115,7 +114,7 @@ def main():
 
     # model.summary()
 
-    x = np.array([[1,2,3,4,5,6,7,8,9,10]])
+    x = np.array([[0,2,3,4,5,6,7,8,9,10]])
     y = model.predict(x)
     print(y)
     print(y.shape)

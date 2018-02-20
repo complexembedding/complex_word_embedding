@@ -117,11 +117,12 @@ def get_index_batch(embedding_params, batch):
         if not sentvec:
             vec = np.zeros(embedding_params['wvec_dim'])
             sentvec.append(vec)
+
         # word_count = len(sentvec)
         # sentvec = np.mean(sentvec, 0)*math.sqrt(word_count)
         embeddings.append(sentvec)
 
-    embeddings = np.vstack(embeddings)
+    # embeddings = np.vstack(embeddings)
     return embeddings
 
 
@@ -164,6 +165,13 @@ def get_lookup_table(embedding_params):
     return(lookup_table)
 
 
+def batch_gen(data, max_sequence_length):
+    sentences = data['X']
+    labels = data['y']
+    for batch, label in zip(sentences, labels):
+        padded_batch = pad_sequences(batch, maxlen=max_sequence_length, dtype='int32',
+        padding='post', truncating='post', value=0.)
+        yield np.asarray(padded_batch),np.asarray(label)
 
 def main():
     word_vec = get_wordvec('C:/Users/quartz/Documents/python/complex_word_embedding/glove/glove.6B.100d.txt')

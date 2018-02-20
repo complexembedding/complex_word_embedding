@@ -24,21 +24,21 @@ import keras.backend as K
 import math
 
 def phase_embedding_layer(max_sequence_length, input_dim):
-    embedding_layer = Embedding(input_dim,
+    embedding_layer = Embedding(input_dim+1,
                             1,
                             embeddings_initializer=RandomUniform(minval=0, maxval=2*math.pi),
-                            input_length=max_sequence_length)
+                            input_length=max_sequence_length, mask_zero = True)
     return embedding_layer
 
 
 def amplitude_embedding_layer(embedding_matrix, max_sequence_length):
     embedding_dim = embedding_matrix.shape[0]
     vocabulary_size = embedding_matrix.shape[1]
-    embedding_layer = Embedding(vocabulary_size,
+    embedding_layer = Embedding(vocabulary_size+1,
                             embedding_dim,
                             weights=[np.transpose(embedding_matrix)],
                             input_length=max_sequence_length,
-                            trainable=False)
+                            trainable=False, mask_zero = True)
 
     return embedding_layer
 
@@ -76,7 +76,7 @@ def amplitude_embedding_layer(embedding_matrix, max_sequence_length):
 #          stft, fast_load):
 
 def main():
-    path_to_vec = '../glove/glove.6B.300d.txt'
+    path_to_vec = '../glove/glove.6B.100d.txt'
     embedding_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
     max_sequence_length = 10
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
