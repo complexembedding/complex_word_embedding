@@ -75,7 +75,7 @@ def amplitude_embedding_layer(embedding_matrix, word_list, max_sequence_length):
 #          stft, fast_load):
 
 def main():
-    path_to_vec = '../glove/glove.6B.100d.txt'
+    path_to_vec = '../glove/glove.6B.300d.txt'
     embedding_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
     max_sequence_length = 10
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
