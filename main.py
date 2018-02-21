@@ -47,8 +47,9 @@ def main():
     #Training
     # sentences = reader.create_batch(embedding_params = embedding_params,batch_size = 1)
     # training_data = sentences['train']
-    # for x, y in batch_gen(training_data, max_squence_length):
-    #     model.train_on_batch(x,y)
+    # for x, y in batch_gen(training_data, max_sequence_length):
+        # print(x,y)
+        # model.train_on_batch(x,y)
     #################################################################
 
 

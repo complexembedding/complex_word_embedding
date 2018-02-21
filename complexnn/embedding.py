@@ -27,18 +27,18 @@ def phase_embedding_layer(max_sequence_length, input_dim):
     embedding_layer = Embedding(input_dim+1,
                             1,
                             embeddings_initializer=RandomUniform(minval=0, maxval=2*math.pi),
-                            input_length=max_sequence_length, mask_zero = True)
+                            input_length=max_sequence_length, mask_zero = False)
     return embedding_layer
 
 
 def amplitude_embedding_layer(embedding_matrix, max_sequence_length):
     embedding_dim = embedding_matrix.shape[0]
     vocabulary_size = embedding_matrix.shape[1]
-    embedding_layer = Embedding(vocabulary_size+1,
+    embedding_layer = Embedding(vocabulary_size,
                             embedding_dim,
                             weights=[np.transpose(embedding_matrix)],
                             input_length=max_sequence_length,
-                            trainable=False, mask_zero = True)
+                            trainable=False, mask_zero = False)
 
     return embedding_layer
 

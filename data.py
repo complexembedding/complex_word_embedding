@@ -6,6 +6,7 @@ import logging
 import cmath
 import random
 import math
+from keras.preprocessing.sequence import pad_sequences
 
 
 
@@ -31,7 +32,7 @@ def create_dictionary(sentences, threshold=0):
     word2id = {}
     for i, (w, _) in enumerate(sorted_words):
         id2word.append(w)
-        word2id[w] = i
+        word2id[w] = i+1
 
     return id2word, word2id
 
@@ -107,12 +108,14 @@ def get_index_batch(embedding_params, batch):
     batch = [sent if sent != [] else ['.'] for sent in batch]
     embeddings = []
 
-    word_list = embedding_params['word2id']
+    word2id = embedding_params['word2id']
     for sent in batch:
         sentvec = []
         for word in sent:
-            if word in word_list:
-                sentvec.append(word_list[word])
+            if word in word2id:
+                print(word2id[word],word)
+                assert word2id[word] > 0
+                sentvec.append(word2id[word])
 
         if not sentvec:
             vec = np.zeros(embedding_params['wvec_dim'])
@@ -153,6 +156,9 @@ def get_lookup_table(embedding_params):
     id2word = embedding_params['id2word']
     word_vec = embedding_params['word_vec']
     lookup_table = []
+
+    # Index 0 corresponds to nothing
+    lookup_table.append([0]* embedding_params['wvec_dim'])
     for i in range(0, len(id2word)):
         word = id2word[i]
         wvec = [0]* embedding_params['wvec_dim']
