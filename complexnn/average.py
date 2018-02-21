@@ -54,16 +54,14 @@ class complex_average(Layer):
         #     raise ValueError('This layer should be called '
         #                      'on only 1 input.'
         #                      'Got ' + str(len(input)) + ' inputs.')
-        print(inputs.shape)
-        y = K.mean(inputs,axis = 1)
+        y = K.l2_normalize(K.mean(inputs,axis = 1, keepdims = False),axis = [1,2])
         # print(y.shape)
         return y
 
     def compute_output_shape(self, input_shape):
         # print(type(input_shape[1]))
         output_shape = list(input_shape)
-        output_shape[-3] = 1
-        return(tuple(output_shape))
+        return(tuple([output_shape[0],output_shape[2],output_shape[3]]))
 
 def main():
     path_to_vec = '../glove/glove.6B.100d.txt'

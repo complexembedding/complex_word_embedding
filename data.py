@@ -113,7 +113,6 @@ def get_index_batch(embedding_params, batch):
         sentvec = []
         for word in sent:
             if word in word2id:
-                print(word2id[word],word)
                 assert word2id[word] > 0
                 sentvec.append(word2id[word])
 
@@ -174,10 +173,11 @@ def get_lookup_table(embedding_params):
 def batch_gen(data, max_sequence_length):
     sentences = data['X']
     labels = data['y']
+    # print(labels)
     for batch, label in zip(sentences, labels):
         padded_batch = pad_sequences(batch, maxlen=max_sequence_length, dtype='int32',
         padding='post', truncating='post', value=0.)
-        yield np.asarray(padded_batch),np.asarray(label)
+        yield np.asarray(padded_batch), np.asarray(label)
 
 def main():
     word_vec = get_wordvec('C:/Users/quartz/Documents/python/complex_word_embedding/glove/glove.6B.100d.txt')

@@ -10,23 +10,30 @@ from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen
 from data_reader import SSTDataReader
 from average import complex_average
 from keras.preprocessing.sequence import pad_sequences
+from projection import complex_projection
+from keras.utils import to_categorical
 
 
 def run_complex_embedding_network(lookup_table, max_sequence_length):
 
+    embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
 
-
     phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])(sequence_input)
+
 
     amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length)(sequence_input)
 
     sentence_embedding_seq = complex_multiply()([phase_embedding, amplitude_embedding])
 
-    output = complex_average()(sentence_embedding_seq)
+
+    avg = complex_average()(sentence_embedding_seq)
+
+    output = complex_projection(dimension = embedding_dimension)(avg)
+
 
     model = Model(sequence_input, output)
-    model.compile(loss='categorical_crossentropy',
+    model.compile(loss='mean_squared_error',
               optimizer='rmsprop',
               metrics=['acc'])
     return model
@@ -44,12 +51,22 @@ def main():
     model.summary()
 
     #################################################################
-    #Training
-    # sentences = reader.create_batch(embedding_params = embedding_params,batch_size = 1)
-    # training_data = sentences['train']
-    # for x, y in batch_gen(training_data, max_sequence_length):
+    # Training
+    sentences = reader.create_batch(embedding_params = embedding_params,batch_size = 4)
+    training_data = sentences['train']
+    for x, y in batch_gen(training_data, max_sequence_length):
         # print(x,y)
-        # model.train_on_batch(x,y)
+        # y_binary = to_categorical(y)
+        model.train_on_batch(x,y)
+        # print(x)
+        # y0 = model.predict(x)
+        # print(y0)
+        # print(type(y0))
+        # print(y0.shape)
+        # print(y)
+        # print(type(y))
+        # print(y.shape)
+
     #################################################################
 
 

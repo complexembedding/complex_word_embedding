@@ -64,6 +64,7 @@ class complex_multiply(Layer):
         phase = inputs[0]
         amplitude = inputs[1]
 
+        sentence_length = amplitude.shape[1]
         embedding_dim = amplitude.shape[2]
 
 
@@ -72,8 +73,8 @@ class complex_multiply(Layer):
         # print(real_part.shape)
         # print(imag_part.shape)
 
-        real_part = K.reshape(real_part,[-1,10,embedding_dim,1])
-        imag_part =  K.reshape(imag_part,[-1,10,embedding_dim,1])
+        real_part = K.reshape(real_part,[-1,sentence_length,embedding_dim,1])
+        imag_part =  K.reshape(imag_part,[-1,sentence_length,embedding_dim,1])
         y = K.concatenate([real_part,imag_part],axis = -1)
         # print(y.shape)
         return y
@@ -85,7 +86,7 @@ class complex_multiply(Layer):
         return(tuple(output_shape))
 
 def main():
-    path_to_vec = '../glove/glove.6B.300d.txt'
+    path_to_vec = '../glove/glove.6B.100d.txt'
     embedding_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
     max_sequence_length = 10
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -114,10 +115,10 @@ def main():
 
     # model.summary()
 
-    x = np.array([[0,2,3,4,5,6,7,8,9,10]])
-    y = model.predict(x)
-    print(y)
-    print(y.shape)
+    # x = np.array([[0,2,3,4,5,6,7,8,9,10]])
+    # y = model.predict(x)
+    # print(y)
+    # print(y.shape)
 
     # rng = numpy.random.RandomState(123)
 

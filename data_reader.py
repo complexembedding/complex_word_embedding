@@ -65,8 +65,11 @@ class SSTDataReader(object):
                 embeddings = data.get_index_batch(embedding_params, batch)
                 # print(embeddings)
                 sst_embed[key]['X'].append(embeddings)
+                # print(self.sst_data[key]['y'][ii:ii + batch_size])
+                sst_embed[key]['y'].append(self.sst_data[key]['y'][ii:ii + batch_size])
             # sst_embed[key]['X'] = np.vstack(sst_embed[key]['X'])
-            sst_embed[key]['y'] = np.array(self.sst_data[key]['y'])
+            # print(sst_embed[key]['y'])
+            sst_embed[key]['y'] = np.array(sst_embed[key]['y'])
             # print(sst_embed[key]['y'])
             logging.info('Computed {0} embeddings'.format(key))
         return sst_embed
@@ -78,8 +81,8 @@ if __name__ == '__main__':
     reader = SSTDataReader(dir_name,nclasses = 2)
     params = reader.get_word_embedding(path_to_vec)
     # print(params['word_vec'])
-    sentences = reader.create_batch(embedding_params = params,batch_size = 1)
+    sentences = reader.create_batch(embedding_params = params,batch_size = 3)
     batches = sentences['train']['X']
     labels = sentences['train']['y']
-    print(params['word_vec'])
-    # print(len(labels))
+    print(len(batches))
+    print(len(labels))
