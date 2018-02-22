@@ -41,3 +41,5 @@ class ProjectionConstraint(Constraint):
         y = K.mean(inputs,axis = 1)
         # print(y.shape)
         return y
+
+

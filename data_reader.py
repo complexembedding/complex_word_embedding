@@ -59,21 +59,22 @@ class SSTDataReader(object):
                                      self.sst_data[key]['y']),
                                  key=lambda z: (len(z[0]), z[1]))
             self.sst_data[key]['X'], self.sst_data[key]['y'] = map(list, zip(*sorted_data))
-
-            for ii in range(0, len(self.sst_data[key]['y']), batch_size):
-                batch = self.sst_data[key]['X'][ii:ii + batch_size]
+            bsize = batch_size
+            if (batch_size == -1):
+                bsize = len(self.sst_data[key]['y'])
+            for ii in range(0, len(self.sst_data[key]['y']), bsize):
+                batch = self.sst_data[key]['X'][ii:ii + bsize]
                 embeddings = data.get_index_batch(embedding_params, batch)
                 # print(embeddings)
                 sst_embed[key]['X'].append(embeddings)
                 # print(self.sst_data[key]['y'][ii:ii + batch_size])
-                sst_embed[key]['y'].append(self.sst_data[key]['y'][ii:ii + batch_size])
+                sst_embed[key]['y'].append(self.sst_data[key]['y'][ii:ii + bsize])
             # sst_embed[key]['X'] = np.vstack(sst_embed[key]['X'])
             # print(sst_embed[key]['y'])
             sst_embed[key]['y'] = np.array(sst_embed[key]['y'])
             # print(sst_embed[key]['y'])
             logging.info('Computed {0} embeddings'.format(key))
         return sst_embed
-
 
 if __name__ == '__main__':
     dir_name = 'C:/Users/quartz/Documents/python/complex_word_embedding/'

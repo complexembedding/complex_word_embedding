@@ -179,6 +179,20 @@ def batch_gen(data, max_sequence_length):
         padding='post', truncating='post', value=0.)
         yield np.asarray(padded_batch), np.asarray(label)
 
+def data_gen(data, max_sequence_length):
+    sentences = data['X']
+    labels = data['y']
+    # print(labels)
+    # batch_list = []
+
+    # for batch, label in zip(sentences, labels):
+    #     padded_batch = pad_sequences(batch, maxlen=max_sequence_length, dtype='int32',
+    #     padding='post', truncating='post', value=0.)
+    #     batch_list=padded_batch
+    padded_sentences = pad_sequences(sentences[0], maxlen=max_sequence_length, dtype='int32',padding='post', truncating='post', value=0.)
+
+    return np.asarray(padded_sentences), np.transpose(np.asarray(labels))
+
 def main():
     word_vec = get_wordvec('C:/Users/quartz/Documents/python/complex_word_embedding/glove/glove.6B.100d.txt')
     print(len(word_vec)) #should be size of vocab
