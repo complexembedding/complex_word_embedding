@@ -5,6 +5,7 @@ import codecs
 sys.path.append('complexnn')
 
 from keras.models import Model, Input, model_from_json
+from keras.layers import Embedding, GlobalAveragePooling1D,Dense
 from embedding import phase_embedding_layer, amplitude_embedding_layer
 from mat_multiply import complex_multiply
 from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
@@ -34,25 +35,41 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
 
 
     model = Model(sequence_input, output)
-    model.compile(loss='mean_squared_error',
-              optimizer='rmsprop',
-              metrics=['acc'])
+#    model.compile(loss='mean_squared_error',
+#              optimizer='rmsprop',
+#              metrics=['acc'])
+    model.compile(loss='binary_crossentropy',
+          optimizer='rmsprop',
+          metrics=['accuracy'])
     return model
-
-def main():
-    dir_name = 'C:/Users/quartz/Documents/python/complex_word_embedding/'
-    path_to_vec = 'glove/glove.6B.100d.txt'#
+def run_real_network(lookup_table, max_sequence_length):
+    embedding_dimension = lookup_table.shape[1]
+    sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
+    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1])(sequence_input)
+    representation =GlobalAveragePooling1D()(embedding)
+    output=Dense(1, activation='sigmoid')(representation)
+    
+    model = Model(sequence_input, output)
+    model.compile(loss='binary_crossentropy',
+              optimizer='rmsprop',
+              metrics=['accuracy'])
+    return model
+    
+if __name__ == '__main__':
+    dir_name = './'
+    path_to_vec = 'D:/dataset/glove/glove.6B.100d.txt'#
 
 
     # model = load_model('model/model_1', 'model/weight_1')
 
     reader = SSTDataReader(dir_name,nclasses = 2)
-    embedding_params = reader.get_word_embedding(path_to_vec)
+    embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
     lookup_table = get_lookup_table(embedding_params)
     max_sequence_length = 60
 
 
     model = run_complex_embedding_network(lookup_table, max_sequence_length)
+#    model = run_real_network(lookup_table, max_sequence_length)
     model.summary()
 
     #################################################################
@@ -77,7 +94,7 @@ def main():
     assert len(test_x) == 1821
     assert len(val_x) == 872
 
-    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= 1,validation_data= (val_x, val_y))
+    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= 10,validation_data= (val_x, val_y))
 
 
     val_acc= history.history['val_acc']
@@ -129,5 +146,5 @@ def load_model(model_structure_path, model_weights_path):
     return model
 
 
-if __name__ == '__main__':
-    main()
+
+

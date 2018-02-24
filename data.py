@@ -75,8 +75,12 @@ def orthonormalized_word_embeddings(word_embeddings_file):
 
 
 # Get word vectors from vocabulary (glove, word2vec, fasttext ..)
-def get_wordvec(path_to_vec, word2id=None):
-    coefficients_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
+def get_wordvec(path_to_vec, word2id=None, orthonormalized=True):
+    if orthonormalized:
+        coefficients_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
+    else:
+        matrix, word_list = form_matrix(path_to_vec)
+        coefficients_matrix = np.transpose(matrix)
     word_vec = {}
 
     with io.open(path_to_vec, 'r', encoding='utf-8') as f:

@@ -20,12 +20,12 @@ class SSTDataReader(object):
         test = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-test'))
         self.sst_data = {'train': train, 'dev': dev, 'test': test}
 
-    def get_word_embedding(self, path_to_vec):
+    def get_word_embedding(self, path_to_vec,orthonormalized=True):
         samples = self.sst_data['train']['X'] + self.sst_data['dev']['X'] + \
                 self.sst_data['test']['X']
 
         id2word, word2id = data.create_dictionary(samples, threshold=0)
-        word_vec = data.get_wordvec(path_to_vec, word2id)
+        word_vec = data.get_wordvec(path_to_vec, word2id,orthonormalized=orthonormalized)
         wvec_dim = len(word_vec[next(iter(word_vec))])
 
         #stores the value of theta for each word
