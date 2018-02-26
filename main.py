@@ -45,7 +45,7 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
 def run_real_network(lookup_table, max_sequence_length):
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1])(sequence_input)
+    embedding = Embedding(trainable=True,weights=[lookup_table], input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1])(sequence_input)
     representation =GlobalAveragePooling1D()(embedding)
     output=Dense(1, activation='sigmoid')(representation)
     
