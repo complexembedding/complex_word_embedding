@@ -1,0 +1,39 @@
+Random init, real network
+[0.506799758822626, 0.8132894013295915]
+
+Glove embedding, real network
+[0.49222982522225, 0.8231740797829458] 
+
+Orthonormalised embedding, real network
+[0.4945433448134773, 0.8198791868669656]
+
+Random init, real network, unit norm embedding constraints
+[0.4627493845441065, 0.8006589781249506]
+
+Glove embedding, real network, unit norm embedding constraints
+[0.48014465339363177, 0.7990115320270105]
+
+Orthonormalised embedding, real network, unit norm embedding constraints
+[0.4964122367651498, 0.79242174619505]
+
+
+
+
+Glove embedding, complex network, unit norm embedding constraints
+[0.6131412030117385, 0.6842394291470825]
+
+
+Random init, complex network, unit norm embedding constraints
+[0.6162877395086273, 0.6847885779664125]
+
+
+Orthonormalised embedding, complex network, unit norm embedding constraints
+[0.6113530644540405, 0.6847885779664125]
+
+
+Glove embedding, complex network + complex dense layer, unit norm embedding constraints
+[0.48938974628469434, 0.8023064252375771]
+
+
+
+

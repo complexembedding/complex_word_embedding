@@ -16,6 +16,9 @@ from projection import Complex1DProjection
 from keras.utils import to_categorical
 from keras.constraints import unit_norm
 import matplotlib.pyplot as plt
+from dense import ComplexDense
+from utils import GetReal
+from keras.initializers import Constant
 
 def run_complex_embedding_network(lookup_table, max_sequence_length):
 
@@ -32,8 +35,10 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
 
     [sentence_embedding_real, sentence_embedding_imag]= ComplexAverage()([seq_embedding_real, seq_embedding_imag])
 
-    output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
+    # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
+    predictions = ComplexDense(units = 1, activation='sigmoid', bias_initializer=Constant(value=0))([sentence_embedding_real, sentence_embedding_imag])
 
+    output = GetReal()(predictions)
 
     model = Model(sequence_input, output)
     model.compile(loss='binary_crossentropy',
@@ -56,7 +61,7 @@ def run_real_network(lookup_table, max_sequence_length):
 
 if __name__ == '__main__':
     dir_name = './'
-    path_to_vec = 'glove/glove.6B.300d.txt'#
+    path_to_vec = 'glove/glove.6B.100d.txt'#
 
     # model = load_model('model/model_1', 'model/weight_1')
 

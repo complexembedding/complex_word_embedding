@@ -92,13 +92,23 @@ class ComplexDense(Layer):
             self.seed = np.random.randint(1, 10e6)
         else:
             self.seed = seed
-        self.input_spec = InputSpec(ndim=2)
+        # self.input_spec = InputSpec(ndim=2)
         self.supports_masking = True
 
     def build(self, input_shape):
-        assert len(input_shape) == 2
-        assert input_shape[-1] % 2 == 0
-        input_dim = input_shape[-1] // 2
+        # assert len(input_shape) == 2
+        # assert input_shape[-1] % 2 == 0
+        # input_dim = input_shape[-1] // 2
+        if not isinstance(input_shape, list):
+            raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.')
+
+        if len(input_shape) != 2:
+             raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.'
+                              'Got ' + str(len(input_shape)) + ' inputs.')
+
+        input_dim = input_shape[0][1]
         data_format = K.image_data_format()
         kernel_shape = (input_dim, self.units)
         fan_in, fan_out = initializers._compute_fans(
@@ -188,19 +198,35 @@ class ComplexDense(Layer):
         else:
             self.bias = None
 
-        self.input_spec = InputSpec(ndim=2, axes={-1: 2 * input_dim})
+        # self.input_spec = InputSpec(ndim=2, axes={-1: 2 * input_dim})
         self.built = True
 
     def call(self, inputs):
-        input_shape = K.shape(inputs)
-        input_dim = input_shape[-1] // 2
-        real_input = inputs[:, :input_dim]
-        imag_input = inputs[:, input_dim:]
+        # input_shape = K.shape(inputs)
+        # input_dim = input_shape[-1] // 2
+        # real_input = inputs[:, :input_dim]
+        # imag_input = inputs[:, input_dim:]
+        if not isinstance(inputs, list):
+            raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.')
 
+        if len(inputs) != 2:
+            raise ValueError('This layer should be called '
+                            'on a list of 2 inputs.'
+                            'Got ' + str(len(inputs)) + ' inputs.')
+        real_input = inputs[0]
+        imag_input = inputs[1]
+
+        inputs = K.concatenate([real_input, imag_input], axis = 1)
+
+        print(inputs.shape)
+        print(self.real_kernel.shape)
+        print(self.imag_kernel.shape)
         cat_kernels_4_real = K.concatenate(
             [self.real_kernel, -self.imag_kernel],
             axis=-1
         )
+
         cat_kernels_4_imag = K.concatenate(
             [self.imag_kernel, self.real_kernel],
             axis=-1
@@ -211,7 +237,7 @@ class ComplexDense(Layer):
         )
 
         output = K.dot(inputs, cat_kernels_4_complex)
-
+        print(output.shape)
         if self.use_bias:
             output = K.bias_add(output, self.bias)
         if self.activation is not None:
@@ -221,8 +247,10 @@ class ComplexDense(Layer):
 
     def compute_output_shape(self, input_shape):
         assert input_shape and len(input_shape) == 2
-        assert input_shape[-1]
-        output_shape = list(input_shape)
+        # assert input_shape[-1]
+        # output_shape = list(input_shape)
+        # output_shape[-1] = 2 * self.units
+        output_shape = list(input_shape[0])
         output_shape[-1] = 2 * self.units
         return tuple(output_shape)
 
