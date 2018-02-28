@@ -2,106 +2,127 @@ from utils import *
 from dense import ComplexDense
 import numpy as np
 from keras import backend as K
-from keras import activations, initializers, regularizers, constraints
-from keras.layers import Layer, InputSpec
+from keras.layers import Layer
 from keras.models import Model, Input
-from keras.initializers import Constant, RandomUniform
-from keras.layers.convolutional import (
-    Convolution2D, Convolution1D, MaxPooling1D, AveragePooling1D)
-from keras.layers.core import Permute
-from keras.layers.core import Dense, Activation, Flatten
 import tensorflow as tf
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from keras.optimizers import Adam
-from keras.regularizers import l2
-from keras.utils import to_categorical
-from keras.layers import Embedding
-from data import *
-from keras.constraints import Constraint
-from embedding import phase_embedding_layer, amplitude_embedding_layer
 import keras.backend as K
 import math
-from mat_multiply import complex_multiply
 
 
-class complex_average(Layer):
+class ComplexAverage(Layer):
 
     def __init__(self, **kwargs):
         # self.output_dim = output_dim
-        super(complex_average, self).__init__(**kwargs)
+        super(ComplexAverage, self).__init__(**kwargs)
 
 
     def build(self, input_shape):
-        # Create a trainable weight variable for this layer.
+        if not isinstance(input_shape, list):
+            raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.')
 
-        # if len(input_shape) != 1:
-        #     raise ValueError('This layer should be called '
-        #                      'on a only one input. '
-        #                      'Got ' + str(len(input_shape)) + ' inputs.')
+        if len(input_shape) != 2:
+             raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.'
+                              'Got ' + str(len(input_shape)) + ' inputs.')
 
-
-        # self.kernel = self.add_weight(name='kernel',
-        #                               shape=(input_shape[1], self.output_dim),
-        #                               initializer='uniform',
-        #                               trainable=True)
-        super(complex_average, self).build(input_shape)  # Be sure to call this somewhere!
+        super(ComplexAverage, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, inputs):
+
+        if not isinstance(inputs, list):
+            raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.')
+
+        if len(inputs) != 2:
+            raise ValueError('This layer should be called '
+                            'on a list of 2 inputs.'
+                            'Got ' + str(len(inputs)) + ' inputs.')
+
 
         # if len(inputs) != 1:
         #     raise ValueError('This layer should be called '
         #                      'on only 1 input.'
         #                      'Got ' + str(len(input)) + ' inputs.')
-        y = K.l2_normalize(K.mean(inputs,axis = 1, keepdims = False),axis = [1,2])
+        input_real = inputs[0]
+        input_imag = inputs[1]
+
+        output_real = K.mean(input_real,axis = 1, keepdims = False)
+        output_imag = K.mean(input_imag,axis = 1, keepdims = False)
+
         # print(y.shape)
-        return y
+        return [output_real, output_imag]
 
     def compute_output_shape(self, input_shape):
         # print(type(input_shape[1]))
-        output_shape = list(input_shape)
-        return(tuple([output_shape[0],output_shape[2],output_shape[3]]))
+        one_input_shape = list(input_shape[0])
+        one_output_shape = [one_input_shape[0], one_input_shape[2]]
+        return [tuple(one_output_shape), tuple(one_output_shape)]
+
+
+
+
+# class complex_average(Layer):
+
+#     def __init__(self, **kwargs):
+#         # self.output_dim = output_dim
+#         super(complex_average, self).__init__(**kwargs)
+
+
+#     def build(self, input_shape):
+#         # Create a trainable weight variable for this layer.
+
+#         # if len(input_shape) != 1:
+#         #     raise ValueError('This layer should be called '
+#         #                      'on a only one input. '
+#         #                      'Got ' + str(len(input_shape)) + ' inputs.')
+
+
+#         # self.kernel = self.add_weight(name='kernel',
+#         #                               shape=(input_shape[1], self.output_dim),
+#         #                               initializer='uniform',
+#         #                               trainable=True)
+#         super(complex_average, self).build(input_shape)  # Be sure to call this somewhere!
+
+#     def call(self, inputs):
+
+#         # if len(inputs) != 1:
+#         #     raise ValueError('This layer should be called '
+#         #                      'on only 1 input.'
+#         #                      'Got ' + str(len(input)) + ' inputs.')
+#         y = K.l2_normalize(K.mean(inputs,axis = 1, keepdims = False),axis = [1,2])
+#         # print(y.shape)
+#         return y
+
+#     def compute_output_shape(self, input_shape):
+#         # print(type(input_shape[1]))
+#         output_shape = list(input_shape)
+#         return(tuple([output_shape[0],output_shape[2],output_shape[3]]))
 
 def main():
-    path_to_vec = '../glove/glove.6B.100d.txt'
-    embedding_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
-    max_sequence_length = 10
-    # print(embedding_matrix.shape)
-    sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
+    input_2 = Input(shape=(3,5), dtype='float')
+    input_1 = Input(shape=(3,5), dtype='float')
+    [output_1, output_2] = ComplexAverage()([input_1, input_2])
 
 
-    phase_embedding = phase_embedding_layer(max_sequence_length, len(word_list))(sequence_input)
-
-    amplitude_embedding = amplitude_embedding_layer(embedding_matrix,max_sequence_length)(sequence_input)
-
-
-    sentence_embeddings = complex_multiply()([phase_embedding, amplitude_embedding])
-
-    output = complex_average()(sentence_embeddings)
-
-    model = Model(sequence_input, output)
-    model.compile(loss='categorical_crossentropy',
+    model = Model([input_1, input_2], [output_1, output_2])
+    model.compile(loss='binary_crossentropy',
               optimizer='rmsprop',
-              metrics=['acc'])
+              metrics=['accuracy'])
     model.summary()
 
-    # sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-    # path_to_vec = '../glove/glove.6B.100d.txt'
-    # embedded_sequences = amplitude_embedding_layer(path_to_vec, 10)
+    x = np.random.random((3,3,5))
+    x_2 = np.random.random((3,3,5))
 
-    # output = embedded_sequences(sequence_input)
-    # model = Model(sequence_input, output)
-    # model.compile(loss='categorical_crossentropy',
-    #           optimizer='rmsprop',
-    #           metrics=['acc'])
 
-    # model.summary()
+    print(x)
+    print(x_2)
+    output = model.predict([x,x_2])
+    print(output)
 
-    x = np.array([[1,2,3,4,5,6,7,8,9,10]])
-    y = model.predict(x)
-    print(y)
-    print(y.shape)
+
 
     # rng = numpy.random.RandomState(123)
 

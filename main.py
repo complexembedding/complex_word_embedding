@@ -5,15 +5,16 @@ import codecs
 sys.path.append('complexnn')
 
 from keras.models import Model, Input, model_from_json
-from keras.layers import Embedding, GlobalAveragePooling1D,Dense
+from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking
 from embedding import phase_embedding_layer, amplitude_embedding_layer
-from mat_multiply import complex_multiply
+from multiply import ComplexMultiply
 from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
 from data_reader import SSTDataReader
-from average import complex_average
+from average import ComplexAverage
 from keras.preprocessing.sequence import pad_sequences
-from projection import complex_projection, complex_1d_projection
+from projection import Complex1DProjection
 from keras.utils import to_categorical
+from keras.constraints import unit_norm
 import matplotlib.pyplot as plt
 
 def run_complex_embedding_network(lookup_table, max_sequence_length):
@@ -24,52 +25,50 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
     phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])(sequence_input)
 
 
-    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length)(sequence_input)
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
 
-    sentence_embedding_seq = complex_multiply()([phase_embedding, amplitude_embedding])
+    [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
 
 
-    avg = complex_average()(sentence_embedding_seq)
+    [sentence_embedding_real, sentence_embedding_imag]= ComplexAverage()([seq_embedding_real, seq_embedding_imag])
 
-    output = complex_1d_projection(dimension = embedding_dimension)(avg)
+    output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
 
 
     model = Model(sequence_input, output)
-#    model.compile(loss='mean_squared_error',
-#              optimizer='rmsprop',
-#              metrics=['acc'])
     model.compile(loss='binary_crossentropy',
           optimizer='rmsprop',
           metrics=['accuracy'])
     return model
+
 def run_real_network(lookup_table, max_sequence_length):
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1])(sequence_input)
+    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1], weights=[lookup_table],embeddings_constraint = unit_norm(axis = 1),mask_zero = True)(sequence_input)
     representation =GlobalAveragePooling1D()(embedding)
     output=Dense(1, activation='sigmoid')(representation)
-    
+
     model = Model(sequence_input, output)
     model.compile(loss='binary_crossentropy',
               optimizer='rmsprop',
               metrics=['accuracy'])
     return model
-    
+
 if __name__ == '__main__':
     dir_name = './'
-    path_to_vec = 'D:/dataset/glove/glove.6B.100d.txt'#
-
+    path_to_vec = 'glove/glove.6B.300d.txt'#
 
     # model = load_model('model/model_1', 'model/weight_1')
 
     reader = SSTDataReader(dir_name,nclasses = 2)
     embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
     lookup_table = get_lookup_table(embedding_params)
+    print(lookup_table.shape)
     max_sequence_length = 60
 
 
     model = run_complex_embedding_network(lookup_table, max_sequence_length)
-#    model = run_real_network(lookup_table, max_sequence_length)
+    # model = run_real_network(lookup_table, max_sequence_length)
     model.summary()
 
     #################################################################
@@ -114,10 +113,14 @@ if __name__ == '__main__':
     evaluation = model.evaluate(x = test_x, y = test_y)
     print(evaluation)
 
+    # print(test_x.shape)
+    y = model.predict(x = test_x)
+    print(y)
 
 
-    save_model_structure(model, 'model/model_1')
-    save_model_weights(model, 'model/weight_1')
+
+    # save_model_structure(model, 'model/model_1')
+    # save_model_weights(model, 'model/weight_1')
     #################################################################
 
 def save_model_structure(model, model_structure_path):

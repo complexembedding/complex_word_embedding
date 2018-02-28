@@ -1,93 +1,81 @@
+
 from utils import *
 from dense import ComplexDense
 import numpy as np
 from keras import backend as K
-from keras import activations, initializers, regularizers, constraints
-from keras.layers import Layer, InputSpec
+from keras.layers import Layer
 from keras.models import Model, Input
-from keras.initializers import Constant, RandomUniform
-from keras.layers.convolutional import (
-    Convolution2D, Convolution1D, MaxPooling1D, AveragePooling1D)
-from keras.layers.core import Permute
-from keras.layers.core import Dense, Activation, Flatten
+from keras.initializers import RandomUniform
+from keras.constraints import unit_norm
 import tensorflow as tf
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from keras.optimizers import Adam
-from keras.regularizers import l2
-from keras.utils import to_categorical
-from keras.layers import Embedding
-from data import *
-from keras.constraints import Constraint
 import keras.backend as K
 import math
+from data import get_lookup_table,data_gen
+from data_reader import SSTDataReader
+from keras.layers import Embedding
+from multiply import ComplexMultiply
 
 def phase_embedding_layer(max_sequence_length, input_dim):
     embedding_layer = Embedding(input_dim+1,
                             1,
                             embeddings_initializer=RandomUniform(minval=0, maxval=2*math.pi),
-                            input_length=max_sequence_length, mask_zero = False)
+                            input_length=max_sequence_length)
     return embedding_layer
 
 
-def amplitude_embedding_layer(embedding_matrix, max_sequence_length):
+def amplitude_embedding_layer(embedding_matrix, max_sequence_length, trainable = False):
     embedding_dim = embedding_matrix.shape[0]
     vocabulary_size = embedding_matrix.shape[1]
     embedding_layer = Embedding(vocabulary_size,
                             embedding_dim,
                             weights=[np.transpose(embedding_matrix)],
+                            embeddings_constraint = unit_norm(axis = 1),
                             input_length=max_sequence_length,
-                            trainable=False, mask_zero = False)
+                            trainable=trainable)
 
     return embedding_layer
 
 
-# def amplitude_embedding_layer()
-
-# def get_shallow_convnet(window_size=4096, channels=2, output_size=84):
-#     inputs = Input(shape=(window_size, channels), dtype = tf.float32)
-
-#     conv = ComplexConv1D(
-#         32, 512, strides=16,
-#         activation='relu')(inputs)
-#     pool = AveragePooling1D(pool_size=4, strides=2)(conv)
-
-#     pool = Permute([2, 1])(pool)
-#     flattened = Flatten()(pool)
-
-#     dense = ComplexDense(2048, activation='relu')(flattened)
-#     # dense = ComplexDense(2048, activation='relu')(inputs)
-#     predictions = ComplexDense(
-#         output_size,
-#         activation='sigmoid',
-#         bias_initializer=Constant(value=-5))(dense)
-#     predictions = GetReal()(predictions)
-#     model = Model(inputs=inputs, outputs=predictions)
-
-#     model.compile(optimizer=Adam(lr=1e-4),
-#                   loss='binary_crossentropy',
-#                   metrics=['accuracy'])
-#     return model
-
-
-
-# def main(model_name, model, local_data, epochs, fourier,
-#          stft, fast_load):
 
 def main():
     path_to_vec = '../glove/glove.6B.100d.txt'
-    embedding_matrix, word_list = orthonormalized_word_embeddings(path_to_vec)
-    max_sequence_length = 10
+    dir_name = '../'
+    reader = SSTDataReader(dir_name,nclasses = 2)
+    embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
+    lookup_table = get_lookup_table(embedding_params)
+    max_sequence_length = 60
+
+
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-    phase_embedding = phase_embedding_layer(max_sequence_length, len(word_list))
+    phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])
+
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length)
+
+    # [embed_seq_real, embed_seq_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
     output = phase_embedding(sequence_input)
     model = Model(sequence_input, output)
-    model.compile(loss='categorical_crossentropy',
+    model.compile(loss='binary_crossentropy',
               optimizer='rmsprop',
-              metrics=['acc'])
+              metrics=['accuracy'])
     model.summary()
 
+
+    train_test_val= reader.create_batch(embedding_params = embedding_params,batch_size = -1)
+
+    training_data = train_test_val['train']
+    test_data = train_test_val['test']
+    validation_data = train_test_val['dev']
+
+
+    # for x, y in batch_gen(training_data, max_sequence_length):
+    #     model.train_on_batch(x,y)
+
+    train_x, train_y = data_gen(training_data, max_sequence_length)
+    test_x, test_y = data_gen(test_data, max_sequence_length)
+    val_x, val_y = data_gen(validation_data, max_sequence_length)
     # sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
     # path_to_vec = '../glove/glove.6B.100d.txt'
     # embedded_sequences = amplitude_embedding_layer(path_to_vec, 10)
@@ -100,8 +88,11 @@ def main():
 
     # model.summary()
 
-    x = np.array([[1,2,3,4,5,6,7,8,9,10]])
-    print(model.predict(x))
+    x = train_x
+
+    y = model.predict(x)
+    print(y)
+    print(y.shape)
 
     # rng = numpy.random.RandomState(123)
 
