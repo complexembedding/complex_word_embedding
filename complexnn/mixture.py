@@ -27,6 +27,7 @@ class ComplexMixture(Layer):
                              'on a list of 2 inputs.'
                               'Got ' + str(len(input_shape)) + ' inputs.')
 
+
         super(ComplexMixture, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, inputs):
@@ -64,8 +65,6 @@ class ComplexMixture(Layer):
 
         # output_real = K.mean(input_real,axis = 1, keepdims = False)
         # output_imag = K.mean(input_imag,axis = 1, keepdims = False)
-        print(output_real.shape)
-        print(output_imag.shape)
         # print(y.shape)
         return [output_real, output_imag]
 

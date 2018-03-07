@@ -14,30 +14,6 @@ import tensorflow as tf
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils import to_categorical
-# def get_shallow_convnet(window_size=4096, channels=2, output_size=84):
-#     inputs = Input(shape=(window_size, channels), dtype = tf.float32)
-
-#     conv = ComplexConv1D(
-#         32, 512, strides=16,
-#         activation='relu')(inputs)
-#     pool = AveragePooling1D(pool_size=4, strides=2)(conv)
-
-#     pool = Permute([2, 1])(pool)
-#     flattened = Flatten()(pool)
-
-#     dense = ComplexDense(2048, activation='relu')(flattened)
-#     # dense = ComplexDense(2048, activation='relu')(inputs)
-#     predictions = ComplexDense(
-#         output_size,
-#         activation='sigmoid',
-#         bias_initializer=Constant(value=-5))(dense)
-#     predictions = GetReal()(predictions)
-#     model = Model(inputs=inputs, outputs=predictions)
-
-#     model.compile(optimizer=Adam(lr=1e-4),
-#                   loss='binary_crossentropy',
-#                   metrics=['accuracy'])
-#     return model
 
 def one_hidden_layer_complex_nn(input_size = 300, output_size = 2):
     input_1 = Input(shape = (input_size,input_size))

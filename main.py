@@ -6,12 +6,12 @@ sys.path.append('complexnn')
 
 from keras.models import Model, Input, model_from_json
 from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking, Flatten
-from embedding import phase_embedding_layer, amplitude_embedding_layer, phase_embedding_layer_2
-from multiply import ComplexMultiply, ComplexMultiply2
+from embedding import phase_embedding_layer, amplitude_embedding_layer
+from multiply import ComplexMultiply
 from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
 from mixture import ComplexMixture
 from data_reader import SSTDataReader
-from average import ComplexAverage
+from superposition import ComplexSuperposition
 from keras.preprocessing.sequence import pad_sequences
 from projection import Complex1DProjection
 from keras.utils import to_categorical
@@ -26,12 +26,12 @@ def run_complex_embedding_network_2(lookup_table, max_sequence_length):
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
 
-    phase_embedding = phase_embedding_layer_2(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = True)(sequence_input)
+    phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = True)(sequence_input)
 
 
     amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
 
-    [seq_embedding_real, seq_embedding_imag] = ComplexMultiply2()([phase_embedding, amplitude_embedding])
+    [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
 
 
     [sentence_embedding_real, sentence_embedding_imag]= ComplexMixture()([seq_embedding_real, seq_embedding_imag])
@@ -65,7 +65,7 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
     [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
 
 
-    [sentence_embedding_real, sentence_embedding_imag]= ComplexAverage()([seq_embedding_real, seq_embedding_imag])
+    [sentence_embedding_real, sentence_embedding_imag]= ComplexSuperposition()([seq_embedding_real, seq_embedding_imag])
 
     # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
     predictions = ComplexDense(units = 2, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
@@ -100,11 +100,10 @@ if __name__ == '__main__':
     reader = SSTDataReader(dir_name,nclasses = 2)
     embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
     lookup_table = get_lookup_table(embedding_params)
-    print(lookup_table.shape)
     max_sequence_length = 60
 
 
-    model = run_complex_embedding_network_2(lookup_table, max_sequence_length)
+    model = run_complex_embedding_network(lookup_table, max_sequence_length)
     # model = run_real_network(lookup_table, max_sequence_length)
     model.summary()
 

@@ -10,11 +10,11 @@ import keras.backend as K
 import math
 
 
-class ComplexAverage(Layer):
+class ComplexSuperposition(Layer):
 
     def __init__(self, **kwargs):
         # self.output_dim = output_dim
-        super(ComplexAverage, self).__init__(**kwargs)
+        super(ComplexSuperposition, self).__init__(**kwargs)
 
 
     def build(self, input_shape):
@@ -27,7 +27,7 @@ class ComplexAverage(Layer):
                              'on a list of 2 inputs.'
                               'Got ' + str(len(input_shape)) + ' inputs.')
 
-        super(ComplexAverage, self).build(input_shape)  # Be sure to call this somewhere!
+        super(ComplexSuperposition, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, inputs):
 
@@ -62,48 +62,10 @@ class ComplexAverage(Layer):
 
 
 
-
-# class complex_average(Layer):
-
-#     def __init__(self, **kwargs):
-#         # self.output_dim = output_dim
-#         super(complex_average, self).__init__(**kwargs)
-
-
-#     def build(self, input_shape):
-#         # Create a trainable weight variable for this layer.
-
-#         # if len(input_shape) != 1:
-#         #     raise ValueError('This layer should be called '
-#         #                      'on a only one input. '
-#         #                      'Got ' + str(len(input_shape)) + ' inputs.')
-
-
-#         # self.kernel = self.add_weight(name='kernel',
-#         #                               shape=(input_shape[1], self.output_dim),
-#         #                               initializer='uniform',
-#         #                               trainable=True)
-#         super(complex_average, self).build(input_shape)  # Be sure to call this somewhere!
-
-#     def call(self, inputs):
-
-#         # if len(inputs) != 1:
-#         #     raise ValueError('This layer should be called '
-#         #                      'on only 1 input.'
-#         #                      'Got ' + str(len(input)) + ' inputs.')
-#         y = K.l2_normalize(K.mean(inputs,axis = 1, keepdims = False),axis = [1,2])
-#         # print(y.shape)
-#         return y
-
-#     def compute_output_shape(self, input_shape):
-#         # print(type(input_shape[1]))
-#         output_shape = list(input_shape)
-#         return(tuple([output_shape[0],output_shape[2],output_shape[3]]))
-
 def main():
     input_2 = Input(shape=(3,5), dtype='float')
     input_1 = Input(shape=(3,5), dtype='float')
-    [output_1, output_2] = ComplexAverage()([input_1, input_2])
+    [output_1, output_2] = ComplexSuperposition()([input_1, input_2])
 
 
     model = Model([input_1, input_2], [output_1, output_2])
