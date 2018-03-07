@@ -68,6 +68,68 @@ class ComplexMultiply(Layer):
 
 
 
+class ComplexMultiply2(Layer):
+    # Input is [phase_embedding, amplitude_embedding]
+    # Output is [sentence_embedding_real, sentence_embedding_imag]
+    def __init__(self, **kwargs):
+        # self.output_dim = output_dim
+        super(ComplexMultiply2, self).__init__(**kwargs)
+
+
+    def build(self, input_shape):
+
+        # Create a trainable weight variable for this layer.
+        if not isinstance(input_shape, list):
+            raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.')
+
+        if len(input_shape) != 2:
+             raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.'
+                              'Got ' + str(len(input_shape)) + ' inputs.')
+
+
+        # self.kernel = self.add_weight(name='kernel',
+        #                               shape=(input_shape[1], self.output_dim),
+        #                               initializer='uniform',
+        #                               trainable=True)
+        super(ComplexMultiply2, self).build(input_shape)  # Be sure to call this somewhere!
+
+    def call(self, inputs):
+
+        if not isinstance(inputs, list):
+            raise ValueError('This layer should be called '
+                             'on a list of 2 inputs.')
+
+        if len(inputs) != 2:
+            raise ValueError('This layer should be called '
+                            'on a list of 2 inputs.'
+                            'Got ' + str(len(inputs)) + ' inputs.')
+
+        phase = inputs[0]
+        amplitude = inputs[1]
+
+        sentence_length = amplitude.shape[1]
+        embedding_dim = amplitude.shape[2]
+
+
+        real_part = K.cos(phase)*amplitude
+        imag_part = K.sin(phase)*amplitude
+        # print(real_part.shape)
+        # print(imag_part.shape)
+
+        return [real_part,imag_part]
+
+    def compute_output_shape(self, input_shape):
+        # print(type(input_shape[1]))
+
+        return [input_shape[1], input_shape[1]]
+
+
+
+
+
+
 def main():
 
 

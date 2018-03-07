@@ -5,10 +5,11 @@ import codecs
 sys.path.append('complexnn')
 
 from keras.models import Model, Input, model_from_json
-from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking
-from embedding import phase_embedding_layer, amplitude_embedding_layer
-from multiply import ComplexMultiply
+from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking, Flatten
+from embedding import phase_embedding_layer, amplitude_embedding_layer, phase_embedding_layer_2
+from multiply import ComplexMultiply, ComplexMultiply2
 from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
+from mixture import ComplexMixture
 from data_reader import SSTDataReader
 from average import ComplexAverage
 from keras.preprocessing.sequence import pad_sequences
@@ -19,6 +20,37 @@ import matplotlib.pyplot as plt
 from dense import ComplexDense
 from utils import GetReal
 from keras.initializers import Constant
+
+def run_complex_embedding_network_2(lookup_table, max_sequence_length):
+
+    embedding_dimension = lookup_table.shape[1]
+    sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
+
+    phase_embedding = phase_embedding_layer_2(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = True)(sequence_input)
+
+
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
+
+    [seq_embedding_real, seq_embedding_imag] = ComplexMultiply2()([phase_embedding, amplitude_embedding])
+
+
+    [sentence_embedding_real, sentence_embedding_imag]= ComplexMixture()([seq_embedding_real, seq_embedding_imag])
+
+    sentence_embedding_real = Flatten()(sentence_embedding_real)
+    sentence_embedding_imag = Flatten()(sentence_embedding_imag)
+    # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
+    predictions = ComplexDense(units = 2, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
+
+    output = GetReal()(predictions)
+
+    model = Model(sequence_input, output)
+    model.compile(loss='binary_crossentropy',
+          optimizer='rmsprop',
+          metrics=['accuracy'])
+    return model
+
+
+
 
 def run_complex_embedding_network(lookup_table, max_sequence_length):
 
@@ -36,7 +68,7 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
     [sentence_embedding_real, sentence_embedding_imag]= ComplexAverage()([seq_embedding_real, seq_embedding_imag])
 
     # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
-    predictions = ComplexDense(units = 1, activation='sigmoid', bias_initializer=Constant(value=0))([sentence_embedding_real, sentence_embedding_imag])
+    predictions = ComplexDense(units = 2, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
 
     output = GetReal()(predictions)
 
@@ -49,7 +81,7 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
 def run_real_network(lookup_table, max_sequence_length):
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1], weights=[lookup_table],embeddings_constraint = unit_norm(axis = 1),mask_zero = True)(sequence_input)
+    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1], weights=[lookup_table],embeddings_constraint = unit_norm(axis = 1))(sequence_input)
     representation =GlobalAveragePooling1D()(embedding)
     output=Dense(1, activation='sigmoid')(representation)
 
@@ -72,7 +104,7 @@ if __name__ == '__main__':
     max_sequence_length = 60
 
 
-    model = run_complex_embedding_network(lookup_table, max_sequence_length)
+    model = run_complex_embedding_network_2(lookup_table, max_sequence_length)
     # model = run_real_network(lookup_table, max_sequence_length)
     model.summary()
 
@@ -98,7 +130,11 @@ if __name__ == '__main__':
     assert len(test_x) == 1821
     assert len(val_x) == 872
 
-    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= 10,validation_data= (val_x, val_y))
+    train_y = to_categorical(train_y)
+    test_y = to_categorical(test_y)
+    val_y = to_categorical(val_y)
+    # print(y_binary)
+    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= 4,validation_data= (val_x, val_y))
 
 
     val_acc= history.history['val_acc']
@@ -118,7 +154,7 @@ if __name__ == '__main__':
     evaluation = model.evaluate(x = test_x, y = test_y)
     print(evaluation)
 
-    # print(test_x.shape)
+    print(test_x.shape)
     y = model.predict(x = test_x)
     print(y)
 

@@ -34,6 +34,18 @@ Orthonormalised embedding, complex network, unit norm embedding constraints
 Glove embedding, complex network + complex dense layer, unit norm embedding constraints
 [0.48938974628469434, 0.8023064252375771]
 
+Random init, complex network + complex dense layer, unit norm embedding constraints
+[0.5183410575794427, 0.7995606808463405]
+
+Orthonormalised embedding, complex network + complex dense layer, unit norm embedding constraints
+[0.534490301084021, 0.7973640855690204]
+
+----------------------------------------------------------------------------------------------------------------------------
+
+
+Glove embedding, complex phases independent of terms, sentence represented as mixture of terms, unit norm embedding constraints, 
+[0.4473203924381753, 0.8209774850947984]
+
 
 
 

@@ -219,9 +219,9 @@ class ComplexDense(Layer):
 
         inputs = K.concatenate([real_input, imag_input], axis = 1)
 
-        print(inputs.shape)
-        print(self.real_kernel.shape)
-        print(self.imag_kernel.shape)
+        # print(inputs.shape)
+        # print(self.real_kernel.shape)
+        # print(self.imag_kernel.shape)
         cat_kernels_4_real = K.concatenate(
             [self.real_kernel, -self.imag_kernel],
             axis=-1
@@ -237,7 +237,7 @@ class ComplexDense(Layer):
         )
 
         output = K.dot(inputs, cat_kernels_4_complex)
-        print(output.shape)
+        # print(output.shape)
         if self.use_bias:
             output = K.bias_add(output, self.bias)
         if self.activation is not None:

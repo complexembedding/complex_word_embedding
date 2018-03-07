@@ -3,7 +3,7 @@ from dense import ComplexDense
 import numpy as np
 from keras import backend as K
 from keras import activations, initializers, regularizers, constraints
-from keras.layers import Layer, InputSpec
+from keras.layers import Layer, InputSpec, Flatten
 from keras.models import Model, Input
 from keras.initializers import Constant
 from keras.layers.convolutional import (
@@ -14,7 +14,6 @@ import tensorflow as tf
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils import to_categorical
-
 # def get_shallow_convnet(window_size=4096, channels=2, output_size=84):
 #     inputs = Input(shape=(window_size, channels), dtype = tf.float32)
 
@@ -41,8 +40,8 @@ from keras.utils import to_categorical
 #     return model
 
 def one_hidden_layer_complex_nn(input_size = 300, output_size = 2):
-    input_1 = Input(shape = (input_size,))
-    input_2 = Input(shape = (input_size,))
+    input_1 = Input(shape = (input_size,input_size))
+    input_2 = Input(shape = (input_size,input_size))
     # conv = ComplexConv1D(
     #     32, 512, strides=16,
     #     activation='relu')(inputs)
@@ -50,8 +49,9 @@ def one_hidden_layer_complex_nn(input_size = 300, output_size = 2):
 
     # pool = Permute([2, 1])(pool)
     # flattened = Flatten()(pool)
-
-    predictions = ComplexDense(units = output_size, activation='sigmoid', bias_initializer=Constant(value=0))([input_1, input_2])
+    input_11 = Flatten()(input_1)
+    input_22 = Flatten()(input_2)
+    predictions = ComplexDense(units = output_size, activation='sigmoid', bias_initializer=Constant(value=0))([input_11, input_22])
     # predictions = ComplexDense(
     #     output_size,
     #     activation='sigmoid',
@@ -92,7 +92,7 @@ def main():
 
 
     # x =
-    x = np.random.random((1,300))
+    x = np.random.random((1,300,300))
     y = to_categorical(np.random.randint(2, size=(1, 1)), num_classes=2)
 
 
