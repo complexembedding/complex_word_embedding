@@ -1,2 +1,6 @@
 # complex_word_embedding
-To run the experiment, simply execute main.py
+
+
+Instructions for running the experiment:
+1. Execute data_crawler.bash to download data, and put them in the folder /data 
+2. Run main.py
