@@ -3,26 +3,16 @@ import io
 import logging
 import numpy as np
 import data as data
-# PATH_TO_GLOVE = 'glove/glove.6B.100d.txt'
+from sklearn.model_selection import train_test_split
 
-class SSTDataReader(object):
-    def __init__(self, task_dir_path, nclasses=2, seed=1111):
-        self.seed = seed
-
-        # binary of fine-grained
-        assert nclasses in [2, 5]
-        self.nclasses = nclasses
-        self.task_name = 'Binary' if self.nclasses == 2 else 'Fine-Grained'
-        logging.debug('***** Transfer task : SST %s classification *****\n\n', self.task_name)
-
-        train = self.loadFile(os.path.join(task_dir_path, self.task_name,'sentiment-train'))
-        dev = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-dev'))
-        test = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-test'))
-        self.sst_data = {'train': train, 'dev': dev, 'test': test}
+class DataReader(object):
+    def __init__(self, train, dev, test, nb_classes):
+        self.data = {'train': train, 'dev': dev, 'test': test}
+        self.nb_classes = nb_classes
 
     def get_word_embedding(self, path_to_vec,orthonormalized=True):
-        samples = self.sst_data['train']['X'] + self.sst_data['dev']['X'] + \
-                self.sst_data['test']['X']
+        samples = self.data['train']['X'] + self.data['dev']['X'] + \
+                self.data['test']['X']
 
         id2word, word2id = data.create_dictionary(samples, threshold=0)
         word_vec = data.get_wordvec(path_to_vec, word2id,orthonormalized=orthonormalized)
@@ -34,6 +24,77 @@ class SSTDataReader(object):
         params = {'word2id':word2id, 'word_vec':word_vec, 'wvec_dim':wvec_dim,'word_complex_phase':word_complex_phase,'id2word':id2word}
 
         return params
+
+    def create_batch(self, embedding_params, batch_size = -1):
+        embed = {'train': {}, 'dev': {}, 'test': {}}
+        for key in self.data:
+            embed[key] = {'X':[],'y':[]}
+            logging.info('Computing embedding for {0}'.format(key))
+            sorted_data = sorted(zip(self.data[key]['X'],
+                                     self.data[key]['y']),
+                                 key=lambda z: (len(z[0]), z[1]))
+            self.data[key]['X'], self.data[key]['y'] = map(list, zip(*sorted_data))
+            bsize = batch_size
+            if (batch_size == -1):
+                bsize = len(self.data[key]['y'])
+            for ii in range(0, len(self.data[key]['y']), bsize):
+                batch = self.data[key]['X'][ii:ii + bsize]
+                embeddings = data.get_index_batch(embedding_params, batch)
+                # print(embeddings)
+                embed[key]['X'].append(embeddings)
+                # print(self.sst_data[key]['y'][ii:ii + batch_size])
+                embed[key]['y'].append(self.data[key]['y'][ii:ii + bsize])
+            # sst_embed[key]['X'] = np.vstack(sst_embed[key]['X'])
+            # print(sst_embed[key]['y'])
+            embed[key]['y'] = np.array(embed[key]['y'])
+            # print(sst_embed[key]['y'])
+            logging.info('Computed {0} embeddings'.format(key))
+        return embed
+
+
+class TRECDataReader(DataReader):
+    def __init__(self, task_dir_path, seed=1111):
+        self.seed = seed
+        train = self.loadFile(os.path.join(task_dir_path, 'train_5500.label'))
+        train, dev = self.train_dev_split(train, train_dev_ratio = 0.2)
+        test = self.loadFile(os.path.join(task_dir_path, 'TREC_10.label'))
+        nb_classes = 6
+        super().__init__(train, dev, test, nb_classes)
+
+    def train_dev_split(self, samples, train_dev_ratio = 0.2):
+        X_train, X_dev, y_train, y_dev = train_test_split(samples['X'], samples['y'], test_size=train_dev_ratio, random_state=self.seed)
+        train = {'X': X_train, 'y':y_train}
+        dev = {'X': X_dev, 'y':y_dev}
+        return train, dev
+
+    def loadFile(self, fpath):
+        trec_data = {'X': [], 'y': []}
+        tgt2idx = {'ABBR': 0, 'DESC': 1, 'ENTY': 2,
+                'HUM': 3, 'LOC': 4, 'NUM': 5}
+        with io.open(fpath, 'r', encoding='latin-1') as f:
+            for line in f:
+                target, sample = line.strip().split(':', 1)
+                sample = sample.split(' ', 1)[1].split()
+                assert target in tgt2idx, target
+                trec_data['X'].append(sample)
+                trec_data['y'].append(tgt2idx[target])
+        return trec_data
+
+
+
+class SSTDataReader(DataReader):
+    def __init__(self, task_dir_path, nclasses = 2, seed = 1111):
+        self.seed = seed
+
+        # binary of fine-grained
+        assert nclasses in [2, 5]
+        self.nclasses = nclasses
+        self.task_name = 'Binary' if self.nclasses == 2 else 'Fine-Grained'
+
+        train = self.loadFile(os.path.join(task_dir_path, self.task_name,'sentiment-train'))
+        dev = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-dev'))
+        test = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-test'))
+        super().__init__(train, dev, test, nclasses)
 
     def loadFile(self, fpath):
         sst_data = {'X': [], 'y': []}
@@ -50,40 +111,56 @@ class SSTDataReader(object):
         assert max(sst_data['y']) == self.nclasses - 1
         return sst_data
 
-    def create_batch(self, embedding_params, batch_size = 1):
-        sst_embed = {'train': {}, 'dev': {}, 'test': {}}
-        for key in self.sst_data:
-            sst_embed[key] = {'X':[],'y':[]}
-            logging.info('Computing embedding for {0}'.format(key))
-            sorted_data = sorted(zip(self.sst_data[key]['X'],
-                                     self.sst_data[key]['y']),
-                                 key=lambda z: (len(z[0]), z[1]))
-            self.sst_data[key]['X'], self.sst_data[key]['y'] = map(list, zip(*sorted_data))
-            bsize = batch_size
-            if (batch_size == -1):
-                bsize = len(self.sst_data[key]['y'])
-            for ii in range(0, len(self.sst_data[key]['y']), bsize):
-                batch = self.sst_data[key]['X'][ii:ii + bsize]
-                embeddings = data.get_index_batch(embedding_params, batch)
-                # print(embeddings)
-                sst_embed[key]['X'].append(embeddings)
-                # print(self.sst_data[key]['y'][ii:ii + batch_size])
-                sst_embed[key]['y'].append(self.sst_data[key]['y'][ii:ii + bsize])
-            # sst_embed[key]['X'] = np.vstack(sst_embed[key]['X'])
-            # print(sst_embed[key]['y'])
-            sst_embed[key]['y'] = np.array(sst_embed[key]['y'])
-            # print(sst_embed[key]['y'])
-            logging.info('Computed {0} embeddings'.format(key))
-        return sst_embed
+class BinaryClassificationDataReader(DataReader):
+    def __init__(self, pos, neg, seed=1111):
+        self.seed = seed
+        self.samples, self.labels = pos + neg, [1] * len(pos) + [0] * len(neg)
+        train, test, dev = self.train_test_dev_split(0.2,0.2)
+        nb_classes = 2
+        super().__init__(train, test, dev, nb_classes)
 
-if __name__ == '__main__':
-    dir_name = 'C:/Users/quartz/Documents/python/complex_word_embedding/'
-    path_to_vec = 'glove/glove.6B.100d.txt'#
-    reader = SSTDataReader(dir_name,nclasses = 2)
-    params = reader.get_word_embedding(path_to_vec)
-    # print(params['word_vec'])
-    sentences = reader.create_batch(embedding_params = params,batch_size = 3)
-    batches = sentences['train']['X']
-    labels = sentences['train']['y']
-    print(len(batches))
-    print(len(labels))
+    def loadFile(self, fpath):
+        with io.open(fpath, 'r', encoding='latin-1') as f:
+            return [line.split() for line in f.read().splitlines()]
+
+    def train_test_dev_split(self, train_test_ratio = 0.2,train_dev_ratio = 0.2):
+        X_train, X_test, y_train, y_test = train_test_split(self.samples, self.labels, test_size=train_test_ratio, random_state=self.seed)
+
+        X_train, X_dev, y_train, y_dev = train_test_split(X_train, y_train, test_size=train_dev_ratio, random_state=self.seed)
+        train = {'X': X_train, 'y':y_train}
+        test = {'X': X_test, 'y':y_test}
+        dev = {'X': X_dev, 'y':y_dev}
+        return train, test, dev
+
+
+class CRDataReader(BinaryClassificationDataReader):
+    def __init__(self, task_path, seed=1111):
+        # logging.debug('***** Transfer task : CR *****\n\n')
+        pos = self.loadFile(os.path.join(task_path, 'custrev.pos'))
+        neg = self.loadFile(os.path.join(task_path, 'custrev.neg'))
+        super().__init__(pos, neg, seed)
+
+
+class MRDataReader(BinaryClassificationDataReader):
+    def __init__(self, task_path, seed=1111):
+        # logging.debug('***** Transfer task : MR *****\n\n')
+        pos = self.loadFile(os.path.join(task_path, 'rt-polarity.pos'))
+        neg = self.loadFile(os.path.join(task_path, 'rt-polarity.neg'))
+        super().__init__(pos, neg, seed)
+
+
+class SUBJDataReader(BinaryClassificationDataReader):
+    def __init__(self, task_path, seed=1111):
+        # logging.debug('***** Transfer task : SUBJ *****\n\n')
+        obj = self.loadFile(os.path.join(task_path, 'subj.objective'))
+        subj = self.loadFile(os.path.join(task_path, 'subj.subjective'))
+        super().__init__(obj, subj, seed)
+
+
+class MPQADataReader(BinaryClassificationDataReader):
+    def __init__(self, task_path, seed=1111):
+        # logging.debug('***** Transfer task : MPQA *****\n\n')
+        pos = self.loadFile(os.path.join(task_path, 'mpqa.pos'))
+        neg = self.loadFile(os.path.join(task_path, 'mpqa.neg'))
+        super().__init__(pos, neg, seed)
+

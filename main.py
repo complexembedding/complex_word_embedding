@@ -10,7 +10,7 @@ from embedding import phase_embedding_layer, amplitude_embedding_layer
 from multiply import ComplexMultiply
 from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
 from mixture import ComplexMixture
-from data_reader import SSTDataReader
+from data_reader import *
 from superposition import ComplexSuperposition
 from keras.preprocessing.sequence import pad_sequences
 from projection import Complex1DProjection
@@ -21,7 +21,7 @@ from dense import ComplexDense
 from utils import GetReal
 from keras.initializers import Constant
 
-def run_complex_embedding_network_2(lookup_table, max_sequence_length):
+def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classes = 2):
 
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -39,7 +39,7 @@ def run_complex_embedding_network_2(lookup_table, max_sequence_length):
     sentence_embedding_real = Flatten()(sentence_embedding_real)
     sentence_embedding_imag = Flatten()(sentence_embedding_imag)
     # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
-    predictions = ComplexDense(units = 2, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
+    predictions = ComplexDense(units = nb_classes, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
 
     output = GetReal()(predictions)
 
@@ -52,7 +52,7 @@ def run_complex_embedding_network_2(lookup_table, max_sequence_length):
 
 
 
-def run_complex_embedding_network(lookup_table, max_sequence_length):
+def run_complex_embedding_network(lookup_table, max_sequence_length, nb_classes = 2):
 
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -68,7 +68,7 @@ def run_complex_embedding_network(lookup_table, max_sequence_length):
     [sentence_embedding_real, sentence_embedding_imag]= ComplexSuperposition()([seq_embedding_real, seq_embedding_imag])
 
     # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
-    predictions = ComplexDense(units = 2, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
+    predictions = ComplexDense(units = nb_classes, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
 
     output = GetReal()(predictions)
 
@@ -92,18 +92,40 @@ def run_real_network(lookup_table, max_sequence_length):
     return model
 
 if __name__ == '__main__':
-    dir_name = './'
+
+    # dir_name = './data/CR'
+    # reader = CRDataReader(dir_name)
+
+    # dir_name = './data/MR'
+    # reader = MRDataReader(dir_name)
+
+    # dir_name = './data/MPQA'
+    # reader = MPQADataReader(dir_name)
+
+
+    dir_name = './data/TREC'
+    reader = TRECDataReader(dir_name)
+
+    # dir_name = './data/SUBJ'
+    # reader = SUBJDataReader(dir_name)
+
+
+    # dir_name = './data/SST'
+    # reader = SSTDataReader(dir_name, nclasses = 2)
+
+
     path_to_vec = 'glove/glove.6B.100d.txt'#
 
-    # model = load_model('model/model_1', 'model/weight_1')
 
-    reader = SSTDataReader(dir_name,nclasses = 2)
+
+
+
     embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
     lookup_table = get_lookup_table(embedding_params)
-    max_sequence_length = 60
+    max_sequence_length = 10
 
 
-    model = run_complex_embedding_network(lookup_table, max_sequence_length)
+    model = run_complex_embedding_network_2(lookup_table, max_sequence_length, reader.nb_classes)
     # model = run_real_network(lookup_table, max_sequence_length)
     model.summary()
 
@@ -125,15 +147,15 @@ if __name__ == '__main__':
     test_x, test_y = data_gen(test_data, max_sequence_length)
     val_x, val_y = data_gen(validation_data, max_sequence_length)
 
-    assert len(train_x) == 67349
-    assert len(test_x) == 1821
-    assert len(val_x) == 872
+    # assert len(train_x) == 67349
+    # assert len(test_x) == 1821
+    # assert len(val_x) == 872
 
     train_y = to_categorical(train_y)
     test_y = to_categorical(test_y)
     val_y = to_categorical(val_y)
     # print(y_binary)
-    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= 4,validation_data= (val_x, val_y))
+    history = model.fit(x=train_x, y = train_y, batch_size = 16, epochs= 10,validation_data= (val_x, val_y))
 
 
     val_acc= history.history['val_acc']
@@ -153,7 +175,6 @@ if __name__ == '__main__':
     evaluation = model.evaluate(x = test_x, y = test_y)
     print(evaluation)
 
-    print(test_x.shape)
     y = model.predict(x = test_x)
     print(y)
 
