@@ -48,6 +48,24 @@ Random init, complex phases independent of terms, sentence represented as mixtur
 
 
 Glove embedding, complex phases independent of terms, sentence represented as mixture of terms, unit norm embedding constraints
+
+SST-binary
 [0.4646422049293539, 0.8228995059624535]
 
+SST-5 class
+[0.36517348137687655, 0.8316245429524768]
 
+SUBJ-binary
+[0.21272157020866872, 0.92125]
+
+TREC-6 class
+[0.2403076252937317, 0.9003333125114441]
+
+MPQA-binary
+[0.45476045794808345, 0.8155568650559811]
+
+MR-binary
+[0.5028706516498418, 0.7626025790625971]
+
+CR-binary
+[0.4664439523456902, 0.779801324898044]

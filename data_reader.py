@@ -9,6 +9,18 @@ class DataReader(object):
     def __init__(self, train, dev, test, nb_classes):
         self.data = {'train': train, 'dev': dev, 'test': test}
         self.nb_classes = nb_classes
+        self.max_sentence_length = self.get_max_sentence_length()
+
+    def get_max_sentence_length(self):
+        samples = self.data['train']['X'] + self.data['dev']['X'] + \
+                self.data['test']['X']
+        max_sentence_length = 0
+        for sample in samples:
+            sample_length = len(sample)
+            if max_sentence_length < sample_length:
+                max_sentence_length = sample_length
+
+        return max_sentence_length
 
     def get_word_embedding(self, path_to_vec,orthonormalized=True):
         samples = self.data['train']['X'] + self.data['dev']['X'] + \

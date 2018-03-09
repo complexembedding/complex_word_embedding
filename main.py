@@ -93,8 +93,8 @@ def run_real_network(lookup_table, max_sequence_length):
 
 if __name__ == '__main__':
 
-    # dir_name = './data/CR'
-    # reader = CRDataReader(dir_name)
+    dir_name = './data/CR'
+    reader = CRDataReader(dir_name)
 
     # dir_name = './data/MR'
     # reader = MRDataReader(dir_name)
@@ -103,15 +103,15 @@ if __name__ == '__main__':
     # reader = MPQADataReader(dir_name)
 
 
-    dir_name = './data/TREC'
-    reader = TRECDataReader(dir_name)
+    # dir_name = './data/TREC'
+    # reader = TRECDataReader(dir_name)
 
     # dir_name = './data/SUBJ'
     # reader = SUBJDataReader(dir_name)
 
 
     # dir_name = './data/SST'
-    # reader = SSTDataReader(dir_name, nclasses = 2)
+    # reader = SSTDataReader(dir_name, nclasses = 5)
 
 
     path_to_vec = 'glove/glove.6B.100d.txt'#
@@ -122,8 +122,10 @@ if __name__ == '__main__':
 
     embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
     lookup_table = get_lookup_table(embedding_params)
-    max_sequence_length = 10
+    # max_sequence_length = 10
 
+    max_sequence_length = reader.max_sentence_length
+    print(max_sequence_length)
 
     model = run_complex_embedding_network_2(lookup_table, max_sequence_length, reader.nb_classes)
     # model = run_real_network(lookup_table, max_sequence_length)
@@ -155,7 +157,7 @@ if __name__ == '__main__':
     test_y = to_categorical(test_y)
     val_y = to_categorical(val_y)
     # print(y_binary)
-    history = model.fit(x=train_x, y = train_y, batch_size = 16, epochs= 10,validation_data= (val_x, val_y))
+    history = model.fit(x=train_x, y = train_y, batch_size = 16, epochs= 20,validation_data= (val_x, val_y))
 
 
     val_acc= history.history['val_acc']
