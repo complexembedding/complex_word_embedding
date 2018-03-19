@@ -2,5 +2,5 @@
 
 
 Instructions for running the experiment:
-1. Execute data_crawler.bash to download data, and put them in the folder /data 
-2. Run main.py
+1. Specify the parameters in config/config.ini
+2. Execute run.sh
