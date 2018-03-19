@@ -22,7 +22,7 @@ from keras.initializers import Constant
 from params import Params
 import matplotlib.pyplot as plt
 
-def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classes = 2):
+def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classes = 2, random_init = True):
 
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -30,7 +30,7 @@ def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classe
     phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = True)(sequence_input)
 
 
-    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True, random_init = random_init)(sequence_input)
 
     [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
 
@@ -120,22 +120,27 @@ def complex_embedding(params):
 
     reader = data_reader_initialize(params.dataset_name,dataset_dir_path)
 
-    lookup_table = None
-    if not( (params.wordvec_initialization == 'random') | (params.wordvec_path == None)):
-        if(params.wordvec_initialization == 'orthogonalize'):
-            embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=True)
-        else:
-            embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=False)
-        lookup_table = get_lookup_table(embedding_params)
+    if(params.wordvec_initialization == 'orthogonalize'):
+        embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=True)
+    elif( (params.wordvec_initialization == 'random') | (params.wordvec_initialization == 'word2vec')):
+        embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=False)
+    else:
+        raise ValueError('The input word initialization approach is invalid!')
+
+    lookup_table = get_lookup_table(embedding_params)
 
     max_sequence_length = reader.max_sentence_length
-    model = run_complex_embedding_network_2(lookup_table, max_sequence_length, reader.nb_classes)
+
+    if not(params.wordvec_initialization == 'random'):
+        model = run_complex_embedding_network_2(lookup_table, max_sequence_length, reader.nb_classes, random_init = False)
 
     model.compile(loss = params.loss,
           optimizer = params.optimizer,
           metrics=['accuracy'])
 
     model.summary()
+    weights = model.get_weights()
+
 
     train_test_val= reader.create_batch(embedding_params = embedding_params,batch_size = -1)
 
@@ -177,14 +182,27 @@ def complex_embedding(params):
 
     evaluation = model.evaluate(x = test_x, y = test_y)
     eval_file_path = os.path.join(params.eval_dir,'eval.txt')
+
     with open(eval_file_path,'w') as eval_file:
         eval_file.write('acc: {}, loss: {}'.format(evaluation[1], evaluation[0]))
+
+
+    np.save(os.path.join(params.eval_dir,'phase_embedding'), model.get_weights()[0])
+
+    np.save(os.path.join(params.eval_dir,'amplitude_embedding'), model.get_weights()[1])
+    # with open(os.path.join(params.eval_dir,'phase_embedding.txt'),'w') as phase_embedding_file:
+    #     phase_embedding_file.write(np.array2string(model.get_weights()[0], max_line_width = 10))
+
+    # with open(os.path.join(params.eval_dir,'amplitude_embedding.txt'),'w') as amplitude_embedding_file:
+    #     amplitude_embedding_file.write(np.array2string(model.get_weights()[1], max_line_width = 10))
+
 
 
 
 if __name__ == '__main__':
     params = Params()
-    params.parseArgs()
+    params.parse_config('config/config.ini')
+    # params.parseArgs()
     complex_embedding(params)
 
 
