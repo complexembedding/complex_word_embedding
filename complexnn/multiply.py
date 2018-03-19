@@ -16,6 +16,10 @@ class ComplexMultiply(Layer):
         # self.output_dim = output_dim
         super(ComplexMultiply, self).__init__(**kwargs)
 
+    # def get_config(self):
+    #     # config = {}
+    #     base_config = super(ComplexMultiply, self).get_config()
+    #     return dict(list(base_config.items()))
 
     def build(self, input_shape):
 

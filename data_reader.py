@@ -176,3 +176,16 @@ class MPQADataReader(BinaryClassificationDataReader):
         neg = self.loadFile(os.path.join(task_path, 'mpqa.neg'))
         super().__init__(pos, neg, seed)
 
+def data_reader_initialize(reader_type, dir_path):
+    if(reader_type == 'CR'):
+        return(CRDataReader(dir_path))
+    if(reader_type == 'MR'):
+        return(MRDataReader(dir_path))
+    if(reader_type == 'SUBJ'):
+        return(SUBJDataReader(dir_path))
+    if(reader_type == 'MPQA'):
+        return(MPQADataReader(dir_path))
+    if(reader_type == 'SST'):
+        return(SSTDataReader(dir_path))
+    if(reader_type == 'TREC'):
+        return(TRECDataReader(dir_path))
