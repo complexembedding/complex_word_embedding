@@ -89,30 +89,27 @@ def run_real_network(lookup_table, max_sequence_length):
               metrics=['accuracy'])
     return model
 
-# def save_model_structure(model, model_structure_path):
-#     json_string = model.to_json()
-#     data_out = codecs.open(model_structure_path,'w')
-#     data_out.write(json_string)
-#     data_out.close()
+def save_model(model, model_dir):
+    model.save_weights(os.path.join(model_dir,'weight'))
+    json_string = model.to_json()
+    data_out = codecs.open(os.path.join(model_dir,'model_structure.json'),'w')
+    data_out.write(json_string)
+    data_out.close()
 
-# def save_model_weights(model, model_weights_path):
-#     model.save_weights(model_weights_path)
+def load_model(model_dir, params):
+    json_file = open(os.path.join(model_dir,'model_structure.json'), 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
 
-# def load_model_structure(model_structure_path):
-#     data_in = codecs.open(model_structure_path)
-#     json_string = data_in.read()
-#     model = model_from_json(json_string)
-#     data_in.close()
-#     return model
+    custom_layers = {'ComplexMultiply': ComplexMultiply, 'ComplexMixture': ComplexMixture, 'ComplexDense': ComplexDense,'GetReal': GetReal}
 
-# def load_model_weights(model, model_weights_path):
-#     model.load_weights(model_weights_path)
-#     return model
-
-# def load_model(model_structure_path, model_weights_path):
-#     model = load_model_structure(model_structure_path)
-#     load_model_weights(model, model_weights_path)
-#     return model
+    model = model_from_json(loaded_model_json, custom_objects=
+        custom_layers)
+    model.compile(loss = params.loss,
+          optimizer = params.optimizer,
+          metrics=['accuracy'])
+    model.load_weights(os.path.join(model_dir,'weight'))
+    return(model)
 
 def complex_embedding(params):
     # datasets_dir, dataset_name, wordvec_initialization ='random', wordvec_path = None, loss = 'binary_crossentropy', optimizer = 'rmsprop', batch_size = 16, epochs= 4
@@ -190,11 +187,12 @@ def complex_embedding(params):
     np.save(os.path.join(params.eval_dir,'phase_embedding'), model.get_weights()[0])
 
     np.save(os.path.join(params.eval_dir,'amplitude_embedding'), model.get_weights()[1])
-    # with open(os.path.join(params.eval_dir,'phase_embedding.txt'),'w') as phase_embedding_file:
-    #     phase_embedding_file.write(np.array2string(model.get_weights()[0], max_line_width = 10))
 
-    # with open(os.path.join(params.eval_dir,'amplitude_embedding.txt'),'w') as amplitude_embedding_file:
-    #     amplitude_embedding_file.write(np.array2string(model.get_weights()[1], max_line_width = 10))
+    save_model(model, os.path.join(params.eval_dir,'model'))
+
+    # model_2 = load_model(os.path.join(params.eval_dir,'model'), params)
+    # print(model_2.evaluate(x = test_x, y = test_y))
+    # print(evaluation)
 
 
 

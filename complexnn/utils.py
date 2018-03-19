@@ -72,7 +72,13 @@ def getpart_output_shape(input_shape):
 
 class GetReal(Layer):
     def call(self, inputs):
+        self.trainable = False
         return get_realpart(inputs)
+    def get_config(self):
+        config = {'trainable': self.trainable}
+        base_config = super(GetReal, self).get_config()
+        return dict(list(base_config.items())+list(config.items()))
+
     def compute_output_shape(self, input_shape):
         return getpart_output_shape(input_shape)
 class GetImag(Layer):

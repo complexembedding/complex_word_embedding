@@ -14,12 +14,13 @@ class ComplexMultiply(Layer):
     # Output is [sentence_embedding_real, sentence_embedding_imag]
     def __init__(self, **kwargs):
         # self.output_dim = output_dim
+        self.trainable = False
         super(ComplexMultiply, self).__init__(**kwargs)
 
-    # def get_config(self):
-    #     # config = {}
-    #     base_config = super(ComplexMultiply, self).get_config()
-    #     return dict(list(base_config.items()))
+    def get_config(self):
+        config = {'trainable': self.trainable}
+        base_config = super(ComplexMultiply, self).get_config()
+        return dict(list(base_config.items())+list(config.items()))
 
     def build(self, input_shape):
 
