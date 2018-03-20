@@ -6,8 +6,18 @@ import logging
 import cmath
 import random
 import math
+import os
 from keras.preprocessing.sequence import pad_sequences
 
+def load_complex_embedding(embedding_dir):
+    word2id = np.load(os.path.join(embedding_dir,'word2id.npy')).item()
+    phase_embedding = np.load(os.path.join(embedding_dir,'phase_embedding.npy'))
+    amplitude_embedding = np.load(os.path.join(embedding_dir,'amplitude_embedding.npy'))
+    complex_embedding_params = {'word2id':word2id, 'phase_embedding': phase_embedding, 'amplitude_embedding': amplitude_embedding}
+    print(phase_embedding.shape)
+    print(amplitude_embedding.shape)
+    print(len(word2id))
+    return complex_embedding_params
 
 
 # Create dictionary
@@ -198,9 +208,8 @@ def data_gen(data, max_sequence_length):
     return np.asarray(padded_sentences), np.transpose(np.asarray(labels))
 
 def main():
-    word_vec = get_wordvec('C:/Users/quartz/Documents/python/complex_word_embedding/glove/glove.6B.100d.txt')
-    print(len(word_vec)) #should be size of vocab
-    print(word_vec['the'])  #should be a vector with first element 1 and all other zeros
+    complex_embedding_dir = 'eval/eval_CR/embedding'
+    load_complex_embedding(complex_embedding_dir)
 
 if __name__ == '__main__':
         main()

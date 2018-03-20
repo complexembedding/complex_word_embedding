@@ -90,6 +90,9 @@ def run_real_network(lookup_table, max_sequence_length):
     return model
 
 def save_model(model, model_dir):
+    if not (os.path.exists(model_dir)):
+        os.mkdir(model_dir)
+
     model.save_weights(os.path.join(model_dir,'weight'))
     json_string = model.to_json()
     data_out = codecs.open(os.path.join(model_dir,'model_structure.json'),'w')
@@ -113,17 +116,18 @@ def load_model(model_dir, params):
 
 def complex_embedding(params):
     # datasets_dir, dataset_name, wordvec_initialization ='random', wordvec_path = None, loss = 'binary_crossentropy', optimizer = 'rmsprop', batch_size = 16, epochs= 4
-    dataset_dir_path = os.path.join(params.datasets_dir, params.dataset_name)
 
-    reader = data_reader_initialize(params.dataset_name,dataset_dir_path)
+    reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
 
     if(params.wordvec_initialization == 'orthogonalize'):
         embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=True)
+
     elif( (params.wordvec_initialization == 'random') | (params.wordvec_initialization == 'word2vec')):
         embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=False)
     else:
         raise ValueError('The input word initialization approach is invalid!')
 
+    # print(embedding_params['word2id'])
     lookup_table = get_lookup_table(embedding_params)
 
     max_sequence_length = reader.max_sentence_length
@@ -167,6 +171,8 @@ def complex_embedding(params):
     val_acc= history.history['val_acc']
     train_acc = history.history['acc']
 
+    if not(os.path.exists(params.eval_dir)):
+        os.mkdir(params.eval_dir)
 
     learning_curve_path = os.path.join(params.eval_dir,'learning_curve')
     line_1, = plt.plot(val_acc)
@@ -178,15 +184,21 @@ def complex_embedding(params):
     fig.savefig(learning_curve_path, dpi=fig.dpi)
 
     evaluation = model.evaluate(x = test_x, y = test_y)
+
+
     eval_file_path = os.path.join(params.eval_dir,'eval.txt')
 
     with open(eval_file_path,'w') as eval_file:
         eval_file.write('acc: {}, loss: {}'.format(evaluation[1], evaluation[0]))
+    embedding_dir = os.path.join(params.eval_dir,'embedding')
+    if not(os.path.exists(embedding_dir)):
+        os.mkdir(embedding_dir)
 
+    np.save(os.path.join(embedding_dir,'phase_embedding'), model.get_weights()[0])
 
-    np.save(os.path.join(params.eval_dir,'phase_embedding'), model.get_weights()[0])
+    np.save(os.path.join(embedding_dir,'amplitude_embedding'), model.get_weights()[1])
 
-    np.save(os.path.join(params.eval_dir,'amplitude_embedding'), model.get_weights()[1])
+    np.save(os.path.join(embedding_dir,'word2id'), embedding_params['word2id'])
 
     save_model(model, os.path.join(params.eval_dir,'model'))
 
@@ -199,118 +211,9 @@ def complex_embedding(params):
 
 if __name__ == '__main__':
     params = Params()
-    params.parse_config('config/config.ini')
-    # params.parseArgs()
+    # params.parse_config('config/config.ini')
+    params.parseArgs()
     complex_embedding(params)
-
-
-
-    # dir_name = './data/CR'
-    # reader = CRDataReader(dir_name)
-
-    # dir_name = './data/MR'
-    # reader = MRDataReader(dir_name)
-
-    # dir_name = './data/MPQA'
-    # reader = MPQADataReader(dir_name)
-
-
-    # dir_name = './data/TREC'
-    # reader = TRECDataReader(dir_name)
-
-    # dir_name = './data/SUBJ'
-    # reader = SUBJDataReader(dir_name)
-
-
-    # dir_name = './data/SST'
-    # reader = SSTDataReader(dir_name, nclasses = 5)
-
-
-    # path_to_vec = 'glove/glove.6B.100d.txt'#
-
-
-
-
-
-    # embedding_params = reader.get_word_embedding(path_to_vec,orthonormalized=False)
-    # lookup_table = get_lookup_table(embedding_params)
-    # # max_sequence_length = 10
-
-    # max_sequence_length = reader.max_sentence_length
-    # print(max_sequence_length)
-
-    # model = run_complex_embedding_network_2(lookup_table, max_sequence_length, reader.nb_classes)
-    # # model = run_real_network(lookup_table, max_sequence_length)
-    # model.summary()
-
-    # #################################################################
-    # # # Training
-
-    # # -1 refers to loading the whole data at once instead of in mini-batches
-    # train_test_val= reader.create_batch(embedding_params = embedding_params,batch_size = -1)
-
-    # training_data = train_test_val['train']
-    # test_data = train_test_val['test']
-    # validation_data = train_test_val['dev']
-
-
-    # # for x, y in batch_gen(training_data, max_sequence_length):
-    # #     model.train_on_batch(x,y)
-
-    # train_x, train_y = data_gen(training_data, max_sequence_length)
-    # test_x, test_y = data_gen(test_data, max_sequence_length)
-    # val_x, val_y = data_gen(validation_data, max_sequence_length)
-
-    # # assert len(train_x) == 67349
-    # # assert len(test_x) == 1821
-    # # assert len(val_x) == 872
-
-    # train_y = to_categorical(train_y)
-    # test_y = to_categorical(test_y)
-    # val_y = to_categorical(val_y)
-    # # print(y_binary)
-    # history = model.fit(x=train_x, y = train_y, batch_size = 16, epochs= 4,validation_data= (val_x, val_y))
-
-
-    # val_acc= history.history['val_acc']
-    # train_acc = history.history['acc']
-
-
-    # line_1, = plt.plot(val_acc)
-    # line_2, = plt.plot(train_acc)
-    # # plt.axis([0, 6, 0, 20])
-
-    # plt.legend([line_1, line_2], ['val_acc', 'train_acc'])
-    # fig = plt.gcf()
-    # fig.savefig('learning_curve', dpi=fig.dpi)
-
-
-    # model.save('my_model.h5')
-
-    # model = load_model('my_model.h5', custom_objects = {'ComplexMultiply':ComplexMultiply})
-
-    # model_json = model.to_json()
-    # with open("model.json", "w") as json_file:
-    #     json_file.write(model_json)
-
-
-    # json_file = open('model.json', 'r')
-    # loaded_model_json = json_file.read()
-    # json_file.close()
-
-    # loaded_model = model_from_json(loaded_model_json, custom_objects = {'ComplexMultiply':ComplexMultiply})
-
-
-
-    # y = model.predict(x = test_x)
-    # print(y)
-
-
-
-    # save_model_structure(model, 'model/model_1')
-    # save_model_weights(model, 'model/weight_1')
-
-    # model = load_model('model/model_1','model/weight_1')
 
 
     #################################################################

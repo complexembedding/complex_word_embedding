@@ -68,12 +68,12 @@ class TRECDataReader(DataReader):
     def __init__(self, task_dir_path, seed=1111):
         self.seed = seed
         train = self.loadFile(os.path.join(task_dir_path, 'train_5500.label'))
-        train, dev = self.train_dev_split(train, train_dev_ratio = 0.2)
+        train, dev = self.train_dev_split(train, train_dev_ratio = 1/9)
         test = self.loadFile(os.path.join(task_dir_path, 'TREC_10.label'))
         nb_classes = 6
         super().__init__(train, dev, test, nb_classes)
 
-    def train_dev_split(self, samples, train_dev_ratio = 0.2):
+    def train_dev_split(self, samples, train_dev_ratio = 1/9):
         X_train, X_dev, y_train, y_dev = train_test_split(samples['X'], samples['y'], test_size=train_dev_ratio, random_state=self.seed)
         train = {'X': X_train, 'y':y_train}
         dev = {'X': X_dev, 'y':y_dev}
@@ -127,7 +127,7 @@ class BinaryClassificationDataReader(DataReader):
     def __init__(self, pos, neg, seed=1111):
         self.seed = seed
         self.samples, self.labels = pos + neg, [1] * len(pos) + [0] * len(neg)
-        train, test, dev = self.train_test_dev_split(0.2,0.2)
+        train, test, dev = self.train_test_dev_split(0.1,1/9)
         nb_classes = 2
         super().__init__(train, test, dev, nb_classes)
 
@@ -135,7 +135,7 @@ class BinaryClassificationDataReader(DataReader):
         with io.open(fpath, 'r', encoding='latin-1') as f:
             return [line.split() for line in f.read().splitlines()]
 
-    def train_test_dev_split(self, train_test_ratio = 0.2,train_dev_ratio = 0.2):
+    def train_test_dev_split(self, train_test_ratio = 0.1,train_dev_ratio = 1/9):
         X_train, X_test, y_train, y_test = train_test_split(self.samples, self.labels, test_size=train_test_ratio, random_state=self.seed)
 
         X_train, X_dev, y_train, y_dev = train_test_split(X_train, y_train, test_size=train_dev_ratio, random_state=self.seed)
@@ -176,7 +176,8 @@ class MPQADataReader(BinaryClassificationDataReader):
         neg = self.loadFile(os.path.join(task_path, 'mpqa.neg'))
         super().__init__(pos, neg, seed)
 
-def data_reader_initialize(reader_type, dir_path):
+def data_reader_initialize(reader_type, datasets_dir):
+    dir_path = os.path.join(datasets_dir, reader_type)
     if(reader_type == 'CR'):
         return(CRDataReader(dir_path))
     if(reader_type == 'MR'):
@@ -185,7 +186,11 @@ def data_reader_initialize(reader_type, dir_path):
         return(SUBJDataReader(dir_path))
     if(reader_type == 'MPQA'):
         return(MPQADataReader(dir_path))
-    if(reader_type == 'SST'):
-        return(SSTDataReader(dir_path))
+    if(reader_type == 'SST_2'):
+        dir_path = os.path.join(datasets_dir, 'SST')
+        return(SSTDataReader(dir_path, nclasses = 2))
+    if(reader_type == 'SST_5'):
+        dir_path = os.path.join(datasets_dir, 'SST')
+        return(SSTDataReader(dir_path, nclasses = 5))
     if(reader_type == 'TREC'):
         return(TRECDataReader(dir_path))
