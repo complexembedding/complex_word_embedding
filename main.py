@@ -22,15 +22,15 @@ from keras.initializers import Constant
 from params import Params
 import matplotlib.pyplot as plt
 
-def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classes = 2, random_init = True):
+def run_complex_embedding_network(lookup_table, max_sequence_length, nb_classes = 2, random_init = True, embedding_trainable = True):
 
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
 
-    phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = True)(sequence_input)
+    phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = embedding_trainable)(sequence_input)
 
 
-    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True, random_init = random_init)(sequence_input)
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = embedding_trainable, random_init = random_init)(sequence_input)
 
     [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
 
@@ -50,43 +50,42 @@ def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classe
 
 
 
-def run_complex_embedding_network(lookup_table, max_sequence_length, nb_classes = 2):
+# def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classes = 2):
 
+#     embedding_dimension = lookup_table.shape[1]
+#     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
+
+#     phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])(sequence_input)
+
+
+#     amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
+
+#     [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
+
+
+#     [sentence_embedding_real, sentence_embedding_imag]= ComplexSuperposition()([seq_embedding_real, seq_embedding_imag])
+
+#     # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
+#     predictions = ComplexDense(units = nb_classes, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
+
+#     output = GetReal()(predictions)
+
+#     model = Model(sequence_input, output)
+#     model.compile(loss='categorical_crossentropy',
+#           optimizer='rmsprop',
+#           metrics=['accuracy'])
+#     return model
+
+def run_real_embedding_network(lookup_table, max_sequence_length, nb_classes = 2, random_init = True, embedding_trainable = True):
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-
-    phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])(sequence_input)
-
-
-    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
-
-    [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
-
-
-    [sentence_embedding_real, sentence_embedding_imag]= ComplexSuperposition()([seq_embedding_real, seq_embedding_imag])
-
-    # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
-    predictions = ComplexDense(units = nb_classes, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
-
-    output = GetReal()(predictions)
-
-    model = Model(sequence_input, output)
-    model.compile(loss='binary_crossentropy',
-          optimizer='rmsprop',
-          metrics=['accuracy'])
-    return model
-
-def run_real_network(lookup_table, max_sequence_length):
-    embedding_dimension = lookup_table.shape[1]
-    sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
-    embedding = Embedding(trainable=True, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1], weights=[lookup_table],embeddings_constraint = unit_norm(axis = 1))(sequence_input)
+    if(random_init):
+        embedding = Embedding(trainable=embedding_trainable, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1], weights=[lookup_table],embeddings_constraint = unit_norm(axis = 1))(sequence_input)
+    else:
+        embedding = Embedding(trainable=embedding_trainable, input_dim=lookup_table.shape[0],output_dim=lookup_table.shape[1],embeddings_constraint = unit_norm(axis = 1))(sequence_input)
     representation =GlobalAveragePooling1D()(embedding)
-    output=Dense(1, activation='sigmoid')(representation)
-
+    output = Dense(nb_classes, activation='sigmoid')(representation)
     model = Model(sequence_input, output)
-    model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
-              metrics=['accuracy'])
     return model
 
 def save_model(model, model_dir):
@@ -131,9 +130,14 @@ def complex_embedding(params):
     lookup_table = get_lookup_table(embedding_params)
 
     max_sequence_length = reader.max_sentence_length
-
+    random_init = True
     if not(params.wordvec_initialization == 'random'):
-        model = run_complex_embedding_network_2(lookup_table, max_sequence_length, reader.nb_classes, random_init = False)
+        random_init = False
+
+    if params.network_type == 'complex':
+        model = run_complex_embedding_network(lookup_table, max_sequence_length, reader.nb_classes, random_init = random_init)
+    else:
+        model = run_real_embedding_network(lookup_table, max_sequence_length, reader.nb_classes, random_init = random_init)
 
     model.compile(loss = params.loss,
           optimizer = params.optimizer,
@@ -156,7 +160,9 @@ def complex_embedding(params):
     train_x, train_y = data_gen(training_data, max_sequence_length)
     test_x, test_y = data_gen(test_data, max_sequence_length)
     val_x, val_y = data_gen(validation_data, max_sequence_length)
-
+    print(len(train_x))
+    print(len(test_x))
+    print(len(val_x))
     # assert len(train_x) == 67349
     # assert len(test_x) == 1821
     # assert len(val_x) == 872
