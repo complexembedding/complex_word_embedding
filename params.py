@@ -5,7 +5,7 @@ import numpy as np
 import configparser
 import argparse
 class Params(object):
-    def __init__(self, datasets_dir = None, dataset_name = None, wordvec_initialization ='random', wordvec_path = None, eval_dir = None, network_type = 'complex',embedding_trainable = True, loss = 'binary_crossentropy', optimizer = 'rmsprop', batch_size = 16, epochs= 4):
+    def __init__(self, datasets_dir = None, dataset_name = None, wordvec_initialization ='random', wordvec_path = None, eval_dir = None, network_type = 'complex_mixture',embedding_trainable = True, loss = 'binary_crossentropy', optimizer = 'rmsprop', batch_size = 16, epochs= 4):
         self.datasets_dir = datasets_dir
         self.dataset_name = dataset_name
         self.wordvec_initialization = wordvec_initialization

@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import codecs
+import pandas as pd
 sys.path.append('complexnn')
 
 from keras.models import Model, Input, model_from_json, load_model
@@ -22,7 +23,7 @@ from keras.initializers import Constant
 from params import Params
 import matplotlib.pyplot as plt
 
-def run_complex_embedding_network(lookup_table, max_sequence_length, nb_classes = 2, random_init = True, embedding_trainable = True):
+def run_complex_embedding_network_mixture(lookup_table, max_sequence_length, nb_classes = 2, random_init = True, embedding_trainable = True):
 
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -50,31 +51,31 @@ def run_complex_embedding_network(lookup_table, max_sequence_length, nb_classes 
 
 
 
-# def run_complex_embedding_network_2(lookup_table, max_sequence_length, nb_classes = 2):
+def run_complex_embedding_network_superposition(lookup_table, max_sequence_length, nb_classes = 2, random_init = True, embedding_trainable = True):
 
-#     embedding_dimension = lookup_table.shape[1]
-#     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
+    embedding_dimension = lookup_table.shape[1]
+    sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
 
-#     phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0])(sequence_input)
-
-
-#     amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = True)(sequence_input)
-
-#     [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
+    phase_embedding = phase_embedding_layer(max_sequence_length, lookup_table.shape[0], embedding_dimension, trainable = embedding_trainable)(sequence_input)
 
 
-#     [sentence_embedding_real, sentence_embedding_imag]= ComplexSuperposition()([seq_embedding_real, seq_embedding_imag])
+    amplitude_embedding = amplitude_embedding_layer(np.transpose(lookup_table), max_sequence_length, trainable = embedding_trainable, random_init = random_init)(sequence_input)
 
-#     # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
-#     predictions = ComplexDense(units = nb_classes, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
+    [seq_embedding_real, seq_embedding_imag] = ComplexMultiply()([phase_embedding, amplitude_embedding])
 
-#     output = GetReal()(predictions)
 
-#     model = Model(sequence_input, output)
-#     model.compile(loss='categorical_crossentropy',
-#           optimizer='rmsprop',
-#           metrics=['accuracy'])
-#     return model
+    [sentence_embedding_real, sentence_embedding_imag]= ComplexSuperposition()([seq_embedding_real, seq_embedding_imag])
+
+    # output = Complex1DProjection(dimension = embedding_dimension)([sentence_embedding_real, sentence_embedding_imag])
+    predictions = ComplexDense(units = nb_classes, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
+
+    output = GetReal()(predictions)
+
+    model = Model(sequence_input, output)
+    model.compile(loss='categorical_crossentropy',
+          optimizer='rmsprop',
+          metrics=['accuracy'])
+    return model
 
 def run_real_embedding_network(lookup_table, max_sequence_length, nb_classes = 2, random_init = True, embedding_trainable = True):
     embedding_dimension = lookup_table.shape[1]
@@ -134,8 +135,10 @@ def complex_embedding(params):
     if not(params.wordvec_initialization == 'random'):
         random_init = False
 
-    if params.network_type == 'complex':
-        model = run_complex_embedding_network(lookup_table, max_sequence_length, reader.nb_classes, random_init = random_init)
+    if params.network_type == 'complex_superposition':
+        model = run_complex_embedding_network_superposition(lookup_table, max_sequence_length, reader.nb_classes, random_init = random_init)
+    elif params.network_type == 'complex_mixture':
+        model = run_complex_embedding_network_mixture(lookup_table, max_sequence_length, reader.nb_classes, random_init = random_init)
     else:
         model = run_real_embedding_network(lookup_table, max_sequence_length, reader.nb_classes, random_init = random_init)
 
@@ -171,7 +174,7 @@ def complex_embedding(params):
     test_y = to_categorical(test_y)
     val_y = to_categorical(val_y)
 
-    history = model.fit(x=train_x, y = train_y, batch_size = params.batch_size, epochs= params.epochs,validation_data= (val_x, val_y))
+    history = model.fit(x=train_x, y = train_y, batch_size = params.batch_size, epochs= params.epochs,validation_data= (test_x, test_y))
 
 
     val_acc= history.history['val_acc']
@@ -181,11 +184,12 @@ def complex_embedding(params):
         os.mkdir(params.eval_dir)
 
     learning_curve_path = os.path.join(params.eval_dir,'learning_curve')
-    line_1, = plt.plot(val_acc)
-    line_2, = plt.plot(train_acc)
+    epoch_indexes = [x+1 for x in range(len(val_acc))]
+    line_1, = plt.plot(epoch_indexes, val_acc)
+    line_2, = plt.plot(epoch_indexes, train_acc)
     # plt.axis([0, 6, 0, 20])
 
-    plt.legend([line_1, line_2], ['val_acc', 'train_acc'])
+    plt.legend([line_1, line_2], ['test_acc', 'train_acc'])
     fig = plt.gcf()
     fig.savefig(learning_curve_path, dpi=fig.dpi)
 
@@ -196,18 +200,27 @@ def complex_embedding(params):
 
     with open(eval_file_path,'w') as eval_file:
         eval_file.write('acc: {}, loss: {}'.format(evaluation[1], evaluation[0]))
+
+
+
     embedding_dir = os.path.join(params.eval_dir,'embedding')
     if not(os.path.exists(embedding_dir)):
         os.mkdir(embedding_dir)
-
     np.save(os.path.join(embedding_dir,'phase_embedding'), model.get_weights()[0])
-
     np.save(os.path.join(embedding_dir,'amplitude_embedding'), model.get_weights()[1])
-
     np.save(os.path.join(embedding_dir,'word2id'), embedding_params['word2id'])
-
     save_model(model, os.path.join(params.eval_dir,'model'))
 
+
+
+
+    experiment_results_path = 'eval/experiment_result.xlsx'
+    xls_file = pd.ExcelFile(experiment_results_path)
+
+    df1 = xls_file.parse('Sheet1')
+    l = {'complex_mixture':0,'complex_superposition':1,'real':2}
+    df1.ix[l[params.network_type],params.dataset_name] = max(val_acc)
+    df1.to_excel(experiment_results_path)
     # model_2 = load_model(os.path.join(params.eval_dir,'model'), params)
     # print(model_2.evaluate(x = test_x, y = test_y))
     # print(evaluation)
