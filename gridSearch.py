@@ -111,7 +111,7 @@ def gridsearch(params):
     
 #    ,validation_data= (test_x, test_y)
     model = KerasClassifier(build_fn=createModel, nb_epoch= 1, batch_size= params.batch_size, verbose=1)
-    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)  
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2)#n_jobs=-1  
     grid_result = grid.fit(train_x, train_y)  
     # summarize results  
     print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))  
