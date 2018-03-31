@@ -71,7 +71,7 @@ class TRECDataReader(DataReader):
         train, dev = self.train_dev_split(train, train_dev_ratio = 1/9)
         test = self.loadFile(os.path.join(task_dir_path, 'TREC_10.label'))
         nb_classes = 6
-        super().__init__(train, dev, test, nb_classes)
+        super(TRECDataReader,self).__init__(train, dev, test, nb_classes)
 
     def train_dev_split(self, samples, train_dev_ratio = 1/9):
         X_train, X_dev, y_train, y_dev = train_test_split(samples['X'], samples['y'], test_size=train_dev_ratio, random_state=self.seed)
@@ -106,7 +106,8 @@ class SSTDataReader(DataReader):
         train = self.loadFile(os.path.join(task_dir_path, self.task_name,'sentiment-train'))
         dev = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-dev'))
         test = self.loadFile(os.path.join(task_dir_path, self.task_name, 'sentiment-test'))
-        super().__init__(train, dev, test, nclasses)
+#        super().__init__(train, dev, test, nclasses)
+        super(SSTDataReader,self).__init__(train, dev, test, nclasses)
 
     def loadFile(self, fpath):
         sst_data = {'X': [], 'y': []}
@@ -150,7 +151,7 @@ class CRDataReader(BinaryClassificationDataReader):
         # logging.debug('***** Transfer task : CR *****\n\n')
         pos = self.loadFile(os.path.join(task_path, 'custrev.pos'))
         neg = self.loadFile(os.path.join(task_path, 'custrev.neg'))
-        super().__init__(pos, neg, seed)
+        super(CRDataReader,self).__init__(pos, neg, seed)
 
 
 class MRDataReader(BinaryClassificationDataReader):
@@ -158,7 +159,7 @@ class MRDataReader(BinaryClassificationDataReader):
         # logging.debug('***** Transfer task : MR *****\n\n')
         pos = self.loadFile(os.path.join(task_path, 'rt-polarity.pos'))
         neg = self.loadFile(os.path.join(task_path, 'rt-polarity.neg'))
-        super().__init__(pos, neg, seed)
+        super(MRDataReader,self).__init__(pos, neg, seed)
 
 
 class SUBJDataReader(BinaryClassificationDataReader):
@@ -166,7 +167,7 @@ class SUBJDataReader(BinaryClassificationDataReader):
         # logging.debug('***** Transfer task : SUBJ *****\n\n')
         obj = self.loadFile(os.path.join(task_path, 'subj.objective'))
         subj = self.loadFile(os.path.join(task_path, 'subj.subjective'))
-        super().__init__(obj, subj, seed)
+        super(SUBJDataReader,self).__init__(obj, subj, seed)
 
 
 class MPQADataReader(BinaryClassificationDataReader):
@@ -174,7 +175,7 @@ class MPQADataReader(BinaryClassificationDataReader):
         # logging.debug('***** Transfer task : MPQA *****\n\n')
         pos = self.loadFile(os.path.join(task_path, 'mpqa.pos'))
         neg = self.loadFile(os.path.join(task_path, 'mpqa.neg'))
-        super().__init__(pos, neg, seed)
+        super(MPQADataReader,self).__init__(pos, neg, seed)
 
 def data_reader_initialize(reader_type, datasets_dir):
     dir_path = os.path.join(datasets_dir, reader_type)
