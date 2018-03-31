@@ -132,7 +132,7 @@ def gridsearch(params):
 
 if __name__ == '__main__':
     params = Params()
-    params.parse_config('config/config_SST_2_superposition.ini')
+    params.parse_config('config/waby.ini')
     
     
     reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
