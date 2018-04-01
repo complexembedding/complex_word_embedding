@@ -29,13 +29,11 @@ from utils import GetReal
 from keras.initializers import Constant
 from params import Params
 import matplotlib.pyplot as plt
-from keras.wrappers.scikit_learn import KerasClassifier  
-from sklearn.grid_search import GridSearchCV 
-# -*- coding: utf-8 -*-
+
+
 
 
 import itertools
-
 import multiprocessing
 import GPUUtil
 
@@ -118,12 +116,13 @@ def run_task(zipped_args):
 
     arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,init_mode,projection)]))
     print ('Run task %s (%d)... \n' % (arg_str, os.getpid()))
-    try:
-        GPUUtil.setCUDA_VISIBLE_DEVICES(num_GPUs=1, verbose=True) != 0
-    except Exception as e:
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
-        print ('use GPU %d \n' % (int(i%8)))
-        
+#    try:
+#        GPUUtil.setCUDA_VISIBLE_DEVICES(num_GPUs=1, verbose=True) != 0
+#    except Exception as e:
+#        os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
+#        print ('use GPU %d \n' % (int(i%8)))
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
+    print ('use GPU %d \n' % (int(i%8)))    
     model = createModel(dropout_rate,optimizer,init_mode)
     
     history = model.fit(x=train_x, y = train_y, batch_size = 1, epochs= params.epochs,validation_data= (test_x, test_y))
