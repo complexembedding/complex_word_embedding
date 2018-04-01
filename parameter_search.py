@@ -5,6 +5,13 @@ Created on Sun Apr  1 21:44:09 2018
 @author: wabywang
 """
 
+
+import sys
+import os,time,random
+import numpy as np
+import codecs
+import pandas as pd
+sys.path.append('complexnn')
 from keras.models import Model, Input, model_from_json, load_model
 from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking, Flatten, Dropout
 from embedding import phase_embedding_layer, amplitude_embedding_layer
@@ -25,15 +32,9 @@ import matplotlib.pyplot as plt
 from keras.wrappers.scikit_learn import KerasClassifier  
 from sklearn.grid_search import GridSearchCV 
 # -*- coding: utf-8 -*-
-import time,random,os
-from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
-from params import Params
+
+
 import itertools
-import sys
-import os
-import numpy as np
-import codecs
-import pandas as pd
 
 
 
