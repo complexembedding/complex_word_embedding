@@ -134,8 +134,8 @@ def run_task(zipped_args):
         f.write(model_info)
     
       
-import tensorflow as tf
-gpu_nums = len(tf.get_available_gpus())
+
+gpu_nums = 8#len(tf.get_available_gpus())
 print("have GPU nums : %d",gpu_nums)
 
 #    time.sleep(1)
