@@ -36,23 +36,17 @@ from sklearn.grid_search import GridSearchCV
 
 import itertools
 
-
-
-
-
-
-
- 
 import multiprocessing
 import GPUUtil
 
-def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he"):
+def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection= True,):
 #    projection= True,max_sequence_length=56,nb_classes=2,dropout_rate=0.5,embedding_trainable=True,random_init=False
-    projection= True
+
+        
     max_sequence_length=56
     nb_classes=2
-    dropout_rate=0.5
     embedding_trainable=True
+    # can be searched by grid
     random_init=False
 
 
@@ -87,62 +81,73 @@ def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he"):
     return model
 
 
-#params = Params()
-#params.parse_config('config/waby.ini')
-#
-#reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
-#
-#if(params.wordvec_initialization == 'orthogonalize'):
-#    embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=True)
-#
-#elif( (params.wordvec_initialization == 'random') | (params.wordvec_initialization == 'word2vec')):
-#    embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=False)
-#else:
-#    raise ValueError('The input word initialization approach is invalid!')
-#
-## print(embedding_params['word2id'])
-#lookup_table = get_lookup_table(embedding_params)
-#
-#max_sequence_length = reader.max_sentence_length
-#random_init = True
-#if not(params.wordvec_initialization == 'random'):
-#    random_init = False
-#
-#train_test_val= reader.create_batch(embedding_params = embedding_params,batch_size = -1)
-#
-#training_data = train_test_val['train']
-#test_data = train_test_val['test']
-#validation_data = train_test_val['dev']
-#
-#train_x, train_y = data_gen(training_data, max_sequence_length)
-#test_x, test_y = data_gen(test_data, max_sequence_length)
-#val_x, val_y = data_gen(validation_data, max_sequence_length)
+params = Params()
+params.parse_config('config/waby.ini')
+
+reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
+
+if(params.wordvec_initialization == 'orthogonalize'):
+    embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=True)
+
+elif( (params.wordvec_initialization == 'random') | (params.wordvec_initialization == 'word2vec')):
+    embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=False)
+else:
+    raise ValueError('The input word initialization approach is invalid!')
+
+# print(embedding_params['word2id'])
+lookup_table = get_lookup_table(embedding_params)
+
+max_sequence_length = reader.max_sentence_length
+random_init = True
+if not(params.wordvec_initialization == 'random'):
+    random_init = False
+
+train_test_val= reader.create_batch(embedding_params = embedding_params,batch_size = -1)
+
+training_data = train_test_val['train']
+test_data = train_test_val['test']
+validation_data = train_test_val['dev']
+
+train_x, train_y = data_gen(training_data, max_sequence_length)
+test_x, test_y = data_gen(test_data, max_sequence_length)
+val_x, val_y = data_gen(validation_data, max_sequence_length)
 
 
-def long_time_task(zipped_args):
-    i,(dropout_rate,optimizer,init_mode) = zipped_args
+def run_task(zipped_args):
+    i,(dropout_rate,optimizer,init_mode,projection) = zipped_args
 
-    arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,init_mode)]))
+    arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,init_mode,projection)]))
     print ('Run task %s (%d)... \n' % (arg_str, os.getpid()))
     try:
         GPUUtil.setCUDA_VISIBLE_DEVICES(num_GPUs=1, verbose=True) != 0
     except Exception as e:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
         print ('use GPU %d \n' % (int(i%8)))
-  
+        
+    model = createModel(dropout_rate,optimizer,init_mode)
     
-
-
+    history = model.fit(x=train_x, y = train_y, batch_size = 1, epochs= params.epochs,validation_data= (test_x, test_y))
+    val_acc= history.history['val_acc']
+    train_acc = history.history['acc']
+    with open("eval.txt") as f:
+        model_info = "%.4f test acc,  %4.f train acc , model : %s,  dropout_rate: %.2f, optimizer: %s ,init_mode %s \n " %(max(val_acc),max(train_acc),"mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
+        f.write(model_info)
+    
+      
+import tensorflow as tf
+gpu_nums = len(tf.get_available_gpus())
+print("have GPU nums : %d",gpu_nums)
 
 #    time.sleep(1)
 if __name__ == "__main__":
     dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] 
     optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
     init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
-    args=[i for i in itertools.product(dropout_rates,optimizers,init_modes)]
-    pool = multiprocessing.Pool(processes=4)
+    projections=  [True,False]
+    args=[i for i in itertools.product(dropout_rates,optimizers,init_modes,projections)]
+    pool = multiprocessing.Pool(processes=gpu_nums)
     for arg in enumerate(args):
-        pool.apply_async(long_time_task, (arg, ))
+        pool.apply_async(run_task, (arg, ))
     pool.close()
     pool.join()
     print ("Sub-process(es) done.")
