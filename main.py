@@ -230,7 +230,7 @@ def complex_embedding(params):
 
 if __name__ == '__main__':
     params = Params()
-    # params.parse_config('config/config_SST_2_superposition.ini.ini')
+    # params.parse_config('config/config_SST_2_superposition.ini')
     params.parseArgs()
     complex_embedding(params)
 

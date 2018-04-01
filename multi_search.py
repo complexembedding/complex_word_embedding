@@ -135,22 +135,26 @@ def run_task(zipped_args):
     
       
 
-gpu_nums = 8#len(tf.get_available_gpus())
-print("have GPU nums : %d",gpu_nums)
+
 
 #    time.sleep(1)
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='running the complex embedding network')
+    parser.add_argument('-gpu_num', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
+    args = parser.parse_args()
+    gpu = int(args["gpu"])
     dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] 
     optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
     init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
     projections=  [True,False]
-    args=[i for i in itertools.product(dropout_rates,optimizers,init_modes,projections)]
-    pool = multiprocessing.Pool(processes=gpu_nums)
+    
+
+    args=[i for i in itertools.product(dropout_rates,optimizers,init_modes,projections) if i[0]==gpu]
+
     for arg in enumerate(args):
-        pool.apply_async(run_task, (arg, ))
-    pool.close()
-    pool.join()
-    print ("Sub-process(es) done.")
+        run_task(arg)
+
 
     
 
