@@ -36,7 +36,7 @@ def createModel(dropout_rate=0.5):
     dropout_rate=0.5
     embedding_trainable=True
     random_init=False
-    print("create model : " +dropout_rate )
+    
 
     embedding_dimension = lookup_table.shape[1]
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -68,7 +68,15 @@ def createModel(dropout_rate=0.5):
     
     return model
 
-def gridsearch(params):  
+
+
+
+
+def gridsearch(params):
+    
+    
+
+
 
     max_sequence_length = reader.max_sentence_length
     random_init = True
@@ -102,13 +110,14 @@ def gridsearch(params):
     param_grid = dict(dropout_rate=dropout_rate)
     
 #    ,validation_data= (test_x, test_y)
-    model = KerasClassifier(build_fn=createModel, nb_epoch= params.batch_size, batch_size= params.batch_size) #verbose=0
-    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1)#n_jobs=-1   for multi process, but it does not work for GPU
+    model = KerasClassifier(build_fn=createModel, nb_epoch= 1, batch_size= params.batch_size, verbose=1)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2)    # n_jobs=-1
     grid_result = grid.fit(train_x, train_y)  
     # summarize results  
     print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))  
     for params, mean_score, scores in grid_result.grid_scores_:  
-        print("%f (%f) with: %r" % (scores.mean(), scores.std(), params))  
+        print("%f (%f) with: %r" % (scores.mean(), scores.std(), params))
+    
     
     
     
@@ -123,7 +132,7 @@ def gridsearch(params):
 
 if __name__ == '__main__':
     params = Params()
-    params.parse_config('config/waby.ini')
+    params.parse_config('config/config_SST_2_superposition.ini')
     
     
     reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
@@ -142,7 +151,7 @@ if __name__ == '__main__':
     gridsearch(params)
 
 
-
+    #################################################################
 
 
 

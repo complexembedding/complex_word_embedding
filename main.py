@@ -6,7 +6,7 @@ import pandas as pd
 sys.path.append('complexnn')
 
 from keras.models import Model, Input, model_from_json, load_model
-from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking, Flatten
+from keras.layers import Embedding, GlobalAveragePooling1D,Dense, Masking, Flatten,Dropout
 from embedding import phase_embedding_layer, amplitude_embedding_layer
 from multiply import ComplexMultiply
 from data import orthonormalized_word_embeddings,get_lookup_table, batch_gen,data_gen
@@ -230,7 +230,7 @@ def complex_embedding(params):
 
 if __name__ == '__main__':
     params = Params()
-    # params.parse_config('config/config.ini')
+    # params.parse_config('config/config_SST_2_superposition.ini.ini')
     params.parseArgs()
     complex_embedding(params)
 
