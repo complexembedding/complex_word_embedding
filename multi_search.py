@@ -110,6 +110,9 @@ train_x, train_y = data_gen(training_data, max_sequence_length)
 test_x, test_y = data_gen(test_data, max_sequence_length)
 val_x, val_y = data_gen(validation_data, max_sequence_length)
 
+train_y = to_categorical(train_y)
+test_y = to_categorical(test_y)
+val_y = to_categorical(val_y)
 
 def run_task(zipped_args):
     i,(dropout_rate,optimizer,init_mode,projection) = zipped_args
