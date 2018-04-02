@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
     args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,init_modes,projections)) if i[0]%8==gpu]
 
-    for arg in enumerate(args):
+    for arg in args:
         run_task(arg)
 
 
