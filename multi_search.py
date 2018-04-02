@@ -128,15 +128,23 @@ def run_task(zipped_args):
     print ('use GPU %d \n' % (int(i%8)))    
     model = createModel(dropout_rate,optimizer,init_mode)
     print("begin to train")
-    history = model.fit(x=train_x, y = train_y, batch_size = 1, epochs= params.epochs,validation_data= (test_x, test_y))
+    history = model.fit(x=train_x, y = train_y, batch_size = 1, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
 
     val_acc= history.history['val_acc']
     train_acc = history.history['acc']
-    with open("eval.txt") as f:
-        model_info = "%.4f test acc,  %4.f train acc , model : %s,  dropout_rate: %.2f, optimizer: %s ,init_mode %s \n " %(max(val_acc),max(train_acc),"mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
-        f.write(model_info)
     
-      
+    
+    model_info = "model : %s,  dropout_rate: %.2f, optimizer: %s ,init_mode %s \n " %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
+    df = pd.read_csv(params.dataset_name+".csv",index_col=0)
+    dataset = params.dataset_name
+#    if arg_str not in df:
+#        df.loc[arg_str] = pd.Series()
+#    if dataset not in df.loc[arg_str]:
+    df.loc[model_info,dataset] = max(val_acc) 
+    df.to_csv(params.dataset_name+".csv")
+
+        
+
 
 
 
@@ -149,13 +157,23 @@ if __name__ == "__main__":
     print("gpu")
     gpu = int(args.gpu)
     print("gpu : %d" % gpu)
+    
+    
+    if not os.path.exists(params.dataset_name+".csv"):
+        with open(params.dataset_name+".csv","w") as f:
+            f.write("argument,"+params.dataset_name+"\n")
+#            f.write("0\n")
+            f.close()
+
+    
     dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] 
     optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
 #    init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
     
     init_modes = ["glorot","he"]
     projections=  [True,False]
-    
+
+        
 
     args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,init_modes,projections)) if i[0]%8==gpu]
 
