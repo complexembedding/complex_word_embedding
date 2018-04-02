@@ -143,7 +143,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='running the complex embedding network')
     parser.add_argument('-gpu_num', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
     args = parser.parse_args()
+    print("gpu")
     gpu = int(args.gpu)
+    print("gpu : %d" % gpu)
     dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] 
     optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
     init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
