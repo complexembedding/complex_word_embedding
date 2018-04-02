@@ -128,20 +128,20 @@ def run_task(zipped_args):
     print ('use GPU %d \n' % (int(i%8)))    
     model = createModel(dropout_rate,optimizer,init_mode)
     print("begin to train")
-    history = model.fit(x=train_x, y = train_y, batch_size = 1, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
+    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
 
     val_acc= history.history['val_acc']
     train_acc = history.history['acc']
     
     
-    model_info = "model : %s,  dropout_rate: %.2f, optimizer: %s ,init_mode %s \n " %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
-    df = pd.read_csv(params.dataset_name+".csv",index_col=0)
+    model_info = "%s:  dropout_rate:%.2f  optimizer:%s init_mode %s \n " %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
+    df = pd.read_csv(params.dataset_name+".csv",index_col=0,sep="\t")
     dataset = params.dataset_name
 #    if arg_str not in df:
 #        df.loc[arg_str] = pd.Series()
 #    if dataset not in df.loc[arg_str]:
     df.loc[model_info,dataset] = max(val_acc) 
-    df.to_csv(params.dataset_name+".csv")
+    df.to_csv(params.dataset_name+".csv",sep="\t")
 
         
 
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     
     if not os.path.exists(params.dataset_name+".csv"):
         with open(params.dataset_name+".csv","w") as f:
-            f.write("argument,"+params.dataset_name+"\n")
+            f.write("argument\t"+params.dataset_name+"\n")
 #            f.write("0\n")
             f.close()
 
