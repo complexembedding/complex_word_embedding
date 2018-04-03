@@ -137,7 +137,7 @@ def run_task(zipped_args):
     train_acc = history.history['acc']
     
     
-    model_info = "%s:  dropout_rate:%.2f  optimizer:%s init_mode %s" %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
+    model_info = "%s:  dropout_rate:%.2f  optimizer:%s init_mode %s batch_size:%d  activation:%s" %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode,batch_size,activation )    
     df = pd.read_csv(params.dataset_name+".csv",index_col=0,sep="\t")
     dataset = params.dataset_name
 #    if arg_str not in df:
