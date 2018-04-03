@@ -69,8 +69,8 @@ class ComplexMultiply(Layer):
             raise ValueError('Each input should be of dimension 2 or 3.'
                             'Got ' + str(len(phase.shape)) + ' dimension.')
 
-        print(cos.shape)
-        print(sin.shape)
+#        print(cos.shape)
+#        print(sin.shape)
 
         real_part = cos*amplitude
         imag_part = sin*amplitude

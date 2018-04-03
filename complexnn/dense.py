@@ -117,7 +117,7 @@ class ComplexDense(Layer):
         )
         fan_in = tf.to_float(fan_in)
         fan_out = tf.to_float(fan_out)
-
+        
         if self.init_criterion == 'he':
             s = K.sqrt(1. / fan_in)
         elif self.init_criterion == 'glorot':
@@ -135,7 +135,7 @@ class ComplexDense(Layer):
 
         # Initialization using euclidean representation:
         def init_w_real(shape, dtype=None):
-
+            
             return tf.random_normal(
                 shape = kernel_shape,
                 mean=0.0,
@@ -150,6 +150,7 @@ class ComplexDense(Layer):
             #     std=s,
             #     dtype=dtype
             # )
+      
         def init_w_imag(shape, dtype=None):
             return tf.random_normal(
                 shape = kernel_shape,

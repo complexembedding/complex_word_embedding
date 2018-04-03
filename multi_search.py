@@ -37,7 +37,7 @@ import itertools
 import multiprocessing
 import GPUUtil
 
-def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection= True,):
+def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection= True,activation="relu"):
 #    projection= True,max_sequence_length=56,nb_classes=2,dropout_rate=0.5,embedding_trainable=True,random_init=False
 
         
@@ -71,6 +71,7 @@ def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection
     predictions = ComplexDense(units = nb_classes,init_criterion=init_criterion, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
 
     output = GetReal()(predictions)
+#    optimizer = optimizers.SGD(lr=learning_rate, momentum=momentum)
     model = Model(sequence_input, output)
     model.compile(loss ="binary_crossentropy",
           optimizer = optimizer,
@@ -115,9 +116,9 @@ test_y = to_categorical(test_y)
 val_y = to_categorical(val_y)
 
 def run_task(zipped_args):
-    i,(dropout_rate,optimizer,init_mode,projection) = zipped_args
+    i,(dropout_rate,optimizer,init_mode,projection,batch_size,activation) = zipped_args
 
-    arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,init_mode,projection)]))
+    arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,init_mode,projection,batch_size,activation)]))
     print ('Run task %s (%d)... \n' % (arg_str, os.getpid()))
 #    try:
 #        GPUUtil.setCUDA_VISIBLE_DEVICES(num_GPUs=1, verbose=True) != 0
@@ -126,15 +127,16 @@ def run_task(zipped_args):
 #        print ('use GPU %d \n' % (int(i%8)))
     os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
     print ('use GPU %d \n' % (int(i%8)))    
-    model = createModel(dropout_rate,optimizer,init_mode)
-    print("begin to train")
-    history = model.fit(x=train_x, y = train_y, batch_size = 32, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
+    model = createModel(dropout_rate,optimizer,init_mode,activation)
+    
+    start=time.time()
+    history = model.fit(x=train_x, y = train_y, batch_size = batch_size, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
 
     val_acc= history.history['val_acc']
     train_acc = history.history['acc']
     
     
-    model_info = "%s:  dropout_rate:%.2f  optimizer:%s init_mode %s \n " %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
+    model_info = "%s:  dropout_rate:%.2f  optimizer:%s init_mode %s" %("mixture" if projection else "superposition",dropout_rate,optimizer,init_mode )    
     df = pd.read_csv(params.dataset_name+".csv",index_col=0,sep="\t")
     dataset = params.dataset_name
 #    if arg_str not in df:
@@ -142,6 +144,8 @@ def run_task(zipped_args):
 #    if dataset not in df.loc[arg_str]:
     df.loc[model_info,dataset] = max(val_acc) 
     df.to_csv(params.dataset_name+".csv",sep="\t")
+    
+    print(model_info +" with time :"+ time.time()-start+" ->" +str( max(val_acc) ) )
 
         
 
@@ -166,16 +170,20 @@ if __name__ == "__main__":
             f.close()
 
     
-    dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] 
-    optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+#    dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    dropout_rates = [0.0, 0.1, 0.2,  0.5,  0.8,]  
+#    optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
+    optimizers = [ 'Adam', 'Nadam']
 #    init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
     
     init_modes = ["glorot","he"]
     projections=  [True,False]
+    batch_sizes = [8,32,64,128]
+    activations=["relu","sigmoid","tanh"]
 
         
 
-    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,init_modes,projections)) if i[0]%8==gpu]
+    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu]
 
     for arg in args:
         run_task(arg)
