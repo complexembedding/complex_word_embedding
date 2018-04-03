@@ -72,6 +72,7 @@ def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection
 
     output = GetReal()(predictions)
 #    optimizer = optimizers.SGD(lr=learning_rate, momentum=momentum)
+#    optimizer=Adadelta(lr=1.0, rho=0.95, epsilon=1e-09) 
     model = Model(sequence_input, output)
     model.compile(loss ="binary_crossentropy",
           optimizer = optimizer,
@@ -145,7 +146,7 @@ def run_task(zipped_args):
     df.loc[model_info,dataset] = max(val_acc) 
     df.to_csv(params.dataset_name+".csv",sep="\t")
     
-    print(model_info +" with time :"+ time.time()-start+" ->" +str( max(val_acc) ) )
+    print(model_info +" with time :"+ str( time.time()-start)+" ->" +str( max(val_acc) ) )
 
         
 
