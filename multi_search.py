@@ -41,7 +41,7 @@ def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection
 #    projection= True,max_sequence_length=56,nb_classes=2,dropout_rate=0.5,embedding_trainable=True,random_init=False
 
         
-    max_sequence_length=56
+
     nb_classes=2
     embedding_trainable=True
     # can be searched by grid
@@ -160,7 +160,10 @@ if __name__ == "__main__":
     parser.add_argument('-gpu_num', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
     args = parser.parse_args()
     print("gpu")
-    gpu = int(args.gpu)
+    try:
+        gpu = int(args.gpu)
+    except:
+        gpu=0
     print("gpu : %d" % gpu)
     
     
@@ -172,7 +175,7 @@ if __name__ == "__main__":
 
     
 #    dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    dropout_rates = [0.0, 0.1, 0.2,  0.5,  0.8,]  
+    dropout_rates = [0.0, 0.1, 0.2,  0.5]  
 #    optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
     optimizers = [ 'Adam', 'Nadam']
 #    init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
