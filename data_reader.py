@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import io
 import logging
@@ -128,7 +129,7 @@ class BinaryClassificationDataReader(DataReader):
     def __init__(self, pos, neg, seed=1111):
         self.seed = seed
         self.samples, self.labels = pos + neg, [1] * len(pos) + [0] * len(neg)
-        train, test, dev = self.train_test_dev_split(0.1,1/9)
+        train, test, dev = self.train_test_dev_split(0.1,1.0/9)
         nb_classes = 2
         super(BinaryClassificationDataReader,self).__init__(train, test, dev, nb_classes)
 
