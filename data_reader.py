@@ -130,7 +130,7 @@ class BinaryClassificationDataReader(DataReader):
         self.samples, self.labels = pos + neg, [1] * len(pos) + [0] * len(neg)
         train, test, dev = self.train_test_dev_split(0.1,1/9)
         nb_classes = 2
-        super().__init__(train, test, dev, nb_classes)
+        super(BinaryClassificationDataReader,self).__init__(train, test, dev, nb_classes)
 
     def loadFile(self, fpath):
         with io.open(fpath, 'r', encoding='latin-1') as f:
