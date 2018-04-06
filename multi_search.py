@@ -79,7 +79,11 @@ def createModel(dropout_rate=0.5,optimizer='adam',learning_rate=0.1,init_criteri
 #    optimizer = optimizers.SGD(lr=learning_rate, momentum=momentum)
 #    optimizer=Adadelta(lr=1.0, rho=0.95, epsilon=1e-09) 
     model = Model(sequence_input, output)
-    model.compile(loss ="binary_crossentropy",
+    if  nb_classes==2:
+        loss = "binary_crossentropy"
+    else:
+        loss= "categorical_crossentropy"
+    model.compile(loss =loss,
           optimizer = optimizer,
           metrics=['accuracy'])
     
