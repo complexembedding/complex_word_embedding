@@ -206,7 +206,7 @@ if __name__ == "__main__":
             ("batch_sizes",[8,32,64,128]),
             ("activations",["relu","sigmoid","tanh"])
             ]
-    pool =[ arg for arg in itertools.product(*[paras for paras in parameter_pools] )]
+    pool =[ arg for arg in itertools.product(*[paras[1] for paras in parameter_pools] )]
     random.shuffle(pool)
     args=[(i,arg) for i,arg in enumerate(pool) if i%8==gpu]    
 
