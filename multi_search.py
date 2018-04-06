@@ -92,12 +92,17 @@ params.parse_config('config/waby.ini')
 import argparse
 parser = argparse.ArgumentParser(description='running the complex embedding network')
 parser.add_argument('-gpu', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
+parser.add_argument('-count', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
 parser.add_argument('-dataset', action = 'store', dest = 'dataset', help = 'please enter the dataset.')
 args = parser.parse_args()
 try:
     gpu = int(args.gpu)
 except:
     gpu=0
+try:
+    count = int(args.count)
+except:
+    count=8
 try :
     if args.dataset is not None:
         params.dataset_name = args.dataset
@@ -198,7 +203,7 @@ if __name__ == "__main__":
     batch_sizes = [8,32,64,128]
     activations=["relu","sigmoid","tanh"]
     parameter_pools=[
-            ("dropout_rates",[0.0, 0.1, 0.2,  0.5]),
+            ("dropout_rates",[0.0, 0.1, 0.2]),
             ("optimizers",[ 'Adam', 'Nadam']),
             ("learning_rates",[10,1,1e-1,1e-2,1e-3]),
             ("init_modes",["glorot","he"]),
@@ -208,7 +213,7 @@ if __name__ == "__main__":
             ]
     pool =[ arg for arg in itertools.product(*[paras[1] for paras in parameter_pools] )]
     random.shuffle(pool)
-    args=[(i,arg) for i,arg in enumerate(pool) if i%8==gpu]    
+    args=[(i,arg) for i,arg in enumerate(pool) if i%count==gpu]    
 
 #    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,learning_rates,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu]
 
