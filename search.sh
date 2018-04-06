@@ -2,7 +2,7 @@ echo "use gpu with multiple processes";
 #list="SST_2 SST_5 MPQA TREC SUBJ MR CR"
 list="SST_5 MPQA TREC SUBJ MR CR"
 
-declare -i count=2
+declare -i count=7
 echo $count
 for dataset in $list
 do
