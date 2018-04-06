@@ -197,16 +197,16 @@ if __name__ == "__main__":
     projections=  [True,False]
     batch_sizes = [8,32,64,128]
     activations=["relu","sigmoid","tanh"]
-    parameter_pools={
-            "dropout_rates":[0.0, 0.1, 0.2,  0.5],
-            "optimizers":[ 'Adam', 'Nadam'],
-            "learning_rates":[10,1,1e-1,1e-2,1e-3],
-            "init_modes":["glorot","he"],
-            "projections":[True,False],
-            "batch_sizes":[8,32,64,128],
-            "activations":["relu","sigmoid","tanh"]
-            }
-    pool =[ arg for arg in itertools.product(*parameter_pools.values())]
+    parameter_pools=[
+            ("dropout_rates",[0.0, 0.1, 0.2,  0.5]),
+            ("optimizers",[ 'Adam', 'Nadam']),
+            ("learning_rates",[10,1,1e-1,1e-2,1e-3]),
+            ("init_modes",["glorot","he"]),
+            ("projections",[True,False]),
+            ("batch_sizes",[8,32,64,128]),
+            ("activations",["relu","sigmoid","tanh"])
+            ]
+    pool =[ arg for arg in itertools.product(*[paras for paras in parameter_pools] )]
     random.shuffle(pool)
     args=[(i,arg) for i,arg in enumerate(pool) if i%8==gpu]    
 
