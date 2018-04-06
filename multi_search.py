@@ -88,6 +88,22 @@ def createModel(dropout_rate=0.5,optimizer='adam',learning_rate=0.1,init_criteri
 
 params = Params()
 params.parse_config('config/waby.ini')
+params.epochs=1
+import argparse
+parser = argparse.ArgumentParser(description='running the complex embedding network')
+parser.add_argument('-gpu', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
+parser.add_argument('-dataset', action = 'store', dest = 'dataset', help = 'please enter the dataset.')
+args = parser.parse_args()
+try:
+    gpu = int(args.gpu)
+except:
+    gpu=0
+try :
+     params.dataset_name = args.dataset
+except:
+    pass     
+print("gpu : %d" % gpu)
+print("dataset: " + params.dataset_name)
 
 reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
 
@@ -134,10 +150,11 @@ def run_task(zipped_args):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
     print ('use GPU %d \n' % (int(i%8)))    
     model = createModel(dropout_rate,optimizer,learning_rate,init_mode,activation)
-    
+    print(dropout_rate,optimizer,learning_rate,init_mode,activation)
+
     start=time.time()
     history = model.fit(x=train_x, y = train_y, batch_size = batch_size, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
-
+    
     val_acc= history.history['val_acc']
     train_acc = history.history['acc']
     
@@ -160,18 +177,7 @@ def run_task(zipped_args):
 
 #    time.sleep(1)
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description='running the complex embedding network')
-    parser.add_argument('-gpu_num', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
-    args = parser.parse_args()
-    print("gpu")
-    try:
-        gpu = int(args.gpu)
-    except:
-        gpu=0
-    print("gpu : %d" % gpu)
-    
-    
+
     if not os.path.exists(params.dataset_name+".csv"):
         with open(params.dataset_name+".csv","w") as f:
             f.write("argument\t"+params.dataset_name+"\n")
@@ -189,12 +195,23 @@ if __name__ == "__main__":
     projections=  [True,False]
     batch_sizes = [8,32,64,128]
     activations=["relu","sigmoid","tanh"]
+    parameter_pools={
+            "dropout_rates":[0.0, 0.1, 0.2,  0.5],
+            "optimizers":[ 'Adam', 'Nadam'],
+            "learning_rates":[10,1,1e-1,1e-2,1e-3],
+            "init_modes":["glorot","he"],
+            "projections":[True,False],
+            "batch_sizes":[8,32,64,128],
+            "activations":["relu","sigmoid","tanh"]
+            }
+    pool =[ arg for arg in itertools.product(*parameter_pools.values())]
+    random.shuffle(pool)
+    args=[(i,arg) for i,arg in enumerate(pool) if i%8==gpu]    
 
-        
-
-    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,learning_rates,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu]
+    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,learning_rates,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu][:1]
 
     for arg in args:
+
         run_task(arg)
 
 
