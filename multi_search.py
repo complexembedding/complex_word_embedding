@@ -92,7 +92,7 @@ params.parse_config('config/waby.ini')
 import argparse
 parser = argparse.ArgumentParser(description='running the complex embedding network')
 parser.add_argument('-gpu', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
-parser.add_argument('-count', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
+parser.add_argument('-count', action = 'store', dest = 'count', help = 'count.')
 parser.add_argument('-dataset', action = 'store', dest = 'dataset', help = 'please enter the dataset.')
 args = parser.parse_args()
 try:
@@ -154,8 +154,8 @@ def run_task(zipped_args):
 #    except Exception as e:
 #        os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
 #        print ('use GPU %d \n' % (int(i%8)))
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
-    print ('use GPU %d \n' % (int(i%8)))    
+#    os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
+#    print ('use GPU %d \n' % (int(i%8)))    
     model = createModel(dropout_rate,optimizer,learning_rate,init_mode,activation)
     print(dropout_rate,optimizer,learning_rate,init_mode,activation)
 
