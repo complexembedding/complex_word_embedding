@@ -37,7 +37,7 @@ import itertools
 import multiprocessing
 import GPUUtil
 
-def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection= True,activation="relu"):
+def createModel(dropout_rate=0.5,optimizer='adam',learning_rate=0.1,init_criterion="he",projection= True,activation="relu"):
 #    projection= True,max_sequence_length=56,nb_classes=2,dropout_rate=0.5,embedding_trainable=True,random_init=False
 
         
@@ -71,6 +71,11 @@ def createModel(dropout_rate=0.5,optimizer='adam',init_criterion="he",projection
     predictions = ComplexDense(units = nb_classes,init_criterion=init_criterion, activation='sigmoid', bias_initializer=Constant(value=-1))([sentence_embedding_real, sentence_embedding_imag])
 
     output = GetReal()(predictions)
+    from keras import optimizers
+    if optimizer=="Nadam":
+        optimizer=optimizers.Nadam(lr=learning_rate,clipvalue=0.5)
+    else:
+        optimizer=optimizers.Adam(lr=learning_rate,clipvalue=0.5)
 #    optimizer = optimizers.SGD(lr=learning_rate, momentum=momentum)
 #    optimizer=Adadelta(lr=1.0, rho=0.95, epsilon=1e-09) 
     model = Model(sequence_input, output)
@@ -117,9 +122,9 @@ test_y = to_categorical(test_y)
 val_y = to_categorical(val_y)
 
 def run_task(zipped_args):
-    i,(dropout_rate,optimizer,init_mode,projection,batch_size,activation) = zipped_args
+    i,(dropout_rate,optimizer,learning_rate,init_mode,projection,batch_size,activation) = zipped_args
 
-    arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,init_mode,projection,batch_size,activation)]))
+    arg_str=(" ".join([str(ii) for ii in (dropout_rate,optimizer,learning_rate,init_mode,projection,batch_size,activation)]))
     print ('Run task %s (%d)... \n' % (arg_str, os.getpid()))
 #    try:
 #        GPUUtil.setCUDA_VISIBLE_DEVICES(num_GPUs=1, verbose=True) != 0
@@ -128,7 +133,7 @@ def run_task(zipped_args):
 #        print ('use GPU %d \n' % (int(i%8)))
     os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
     print ('use GPU %d \n' % (int(i%8)))    
-    model = createModel(dropout_rate,optimizer,init_mode,activation)
+    model = createModel(dropout_rate,optimizer,learning_rate,init_mode,activation)
     
     start=time.time()
     history = model.fit(x=train_x, y = train_y, batch_size = batch_size, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
@@ -179,7 +184,7 @@ if __name__ == "__main__":
 #    optimizers = ['SGD', 'RMSprop', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam']
     optimizers = [ 'Adam', 'Nadam']
 #    init_modes = ['uniform', 'lecun_uniform', 'normal', 'zero', 'glorot_normal', 'glorot_uniform', 'he_normal', 'he_uniform','he']
-    
+    learning_rates=[10,1,1e-1,1e-2,1e-3]
     init_modes = ["glorot","he"]
     projections=  [True,False]
     batch_sizes = [8,32,64,128]
@@ -187,7 +192,7 @@ if __name__ == "__main__":
 
         
 
-    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu]
+    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,learning_rates,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu]
 
     for arg in args:
         run_task(arg)
