@@ -88,7 +88,7 @@ def createModel(dropout_rate=0.5,optimizer='adam',learning_rate=0.1,init_criteri
 
 params = Params()
 params.parse_config('config/waby.ini')
-params.epochs=1
+
 import argparse
 parser = argparse.ArgumentParser(description='running the complex embedding network')
 parser.add_argument('-gpu', action = 'store', dest = 'gpu', help = 'please enter the gpu num.')
@@ -99,7 +99,8 @@ try:
 except:
     gpu=0
 try :
-     params.dataset_name = args.dataset
+    if args.dataset is not None:
+        params.dataset_name = args.dataset
 except:
     pass     
 print("gpu : %d" % gpu)
@@ -209,7 +210,7 @@ if __name__ == "__main__":
     random.shuffle(pool)
     args=[(i,arg) for i,arg in enumerate(pool) if i%8==gpu]    
 
-    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,learning_rates,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu][:1]
+#    args=[i for i in enumerate(itertools.product(dropout_rates,optimizers,learning_rates,init_modes,projections,batch_sizes,activations)) if i[0]%8==gpu]
 
     for arg in args:
 
