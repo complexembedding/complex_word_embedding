@@ -36,13 +36,13 @@ import matplotlib.pyplot as plt
 import itertools
 import multiprocessing
 import GPUUtil
-
+nb_classes=2
 def createModel(dropout_rate=0.5,optimizer='adam',learning_rate=0.1,init_criterion="he",projection= True,activation="relu"):
 #    projection= True,max_sequence_length=56,nb_classes=2,dropout_rate=0.5,embedding_trainable=True,random_init=False
 
         
 
-    nb_classes=2
+    
     embedding_trainable=True
     # can be searched by grid
     random_init=False
@@ -106,6 +106,7 @@ print("gpu : %d" % gpu)
 print("dataset: " + params.dataset_name)
 
 reader = data_reader_initialize(params.dataset_name,params.datasets_dir)
+nb_classes=reader.nb_classes
 
 if(params.wordvec_initialization == 'orthogonalize'):
     embedding_params = reader.get_word_embedding(params.wordvec_path,orthonormalized=True)
