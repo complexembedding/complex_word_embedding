@@ -156,8 +156,8 @@ def run_task(zipped_args):
 #        print ('use GPU %d \n' % (int(i%8)))
 #    os.environ["CUDA_VISIBLE_DEVICES"] = str(int(i%8))
 #    print ('use GPU %d \n' % (int(i%8)))    
-    model = createModel(dropout_rate,optimizer,learning_rate,init_mode,activation)
-    print(dropout_rate,optimizer,learning_rate,init_mode,activation)
+    model = createModel(dropout_rate,optimizer,learning_rate,init_mode,projection,activation)
+    print(dropout_rate,optimizer,learning_rate,init_mode,projection,activation)
 
     start=time.time()
     history = model.fit(x=train_x, y = train_y, batch_size = batch_size, epochs= params.epochs,validation_data= (test_x, test_y),verbose = 0 )
