@@ -7,7 +7,7 @@ echo $count
 for dataset in $list
 do
     echo process data $dataset 
-    for((i=1;i<= $count;i++))
+    for((i=0;i< $count;i++))
     do
         {
          echo "use gpu" +$i ; 
